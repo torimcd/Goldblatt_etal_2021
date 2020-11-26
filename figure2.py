@@ -60,7 +60,7 @@ eis_qs850_file = 'c4_eis_map_qs850.nc'
 eis_ = ''
 
 #create figure - use figsize=(8.5, 11) to make bigger
-fig = plt.figure(figsize=(3.46457, 4.48356117647))
+fig = plt.figure(figsize=(8.5, 11))
 
 # set up container 
 outer_grid = gridspec.GridSpec(1, 2, wspace=0.2, hspace=0.1, width_ratios=(2,1))
@@ -95,8 +95,8 @@ for p in climfields:
 	climfield = climfields[n]
 
 	# get out the data for the 1.0 S/So and 0.8 S/So
-	presentcase = filebase + f + present +'.nc'
-	eightcase = filebase + f + eight +'.nc'
+	presentcase = outfileloc + f + present +'.nc'
+	eightcase = outfileloc + f + eight +'.nc'
 	
 	# add the subplot for this field
 	ax = fig.add_subplot(climabsgrid[a])
@@ -182,6 +182,7 @@ for p in climfields:
 		a=a+1
 		cb = plt.colorbar(cs, cax=ax)
 
+		cb.ax.tick_params(labelsize=7) 
 		tick_locator = ticker.MaxNLocator(nbins=5)
 		cb.locator = tick_locator
 		cb.update_ticks()
@@ -209,8 +210,10 @@ for p in climfields:
 		# plot the colorbar - DIFF value
 		ax = fig.add_subplot(climdiffgrid[d])
 		d=d+1
-		cb = plt.colorbar(cs, cax=ax, label=units_all[n])
+		cb = plt.colorbar(cs, cax=ax)
 
+		cb.set_label(label=units_all[n], fontsize=7)
+		cb.ax.tick_params(labelsize=7) 
 		tick_locator = ticker.MaxNLocator(nbins=5)
 		cb.locator = tick_locator
 		cb.update_ticks()
@@ -298,8 +301,8 @@ if os.path.isfile(z700_p):
 
 
 #GET lts for S/So = 0.8
-c = '10'
-dsloc = outfileloc + lts_outfilebase+'_'+ c + '_sub.nc'
+c = '08'
+dsloc = outfileloc + lts_outfilebase+ c + '_lts.nc'
 if os.path.isfile(dsloc):
 
 	# open the file and get out the variable
@@ -309,7 +312,7 @@ if os.path.isfile(dsloc):
 
 #GET lts for S/So = 1.0
 c = '10'
-dsloc = outfileloc + lts_outfilebase+'_'+ c + '_sub.nc'
+dsloc = outfileloc + lts_outfilebase+ c + '_lts.nc'
 if os.path.isfile(dsloc):
 
 	# open the file and get out the variable
@@ -355,9 +358,6 @@ if os.path.isfile(tempsum_p):
 	ds.close() #close the file
 
 	
-print(len(qs850))
-print(len(tempsum))
-
 # equation [ 5 ] from  Wood & Bretherton 2006 - moist adiabatic potential temperature gradient for S/So = 0.8
 pal_e = (9.9)*(1-(1+2450000*qs850/(287.058*(tempsum/2)))/(1+(2450000**2)*qs850/(993*461.4*((tempsum/2)**2))))	
 
@@ -422,6 +422,7 @@ ax = fig.add_subplot(climabsgrid[a])
 a=a+1
 cb = plt.colorbar(cs, cax=ax)
 
+cb.ax.tick_params(labelsize=7) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -448,8 +449,10 @@ cs.set_edgecolor("face")
 # plot the colorbar - DIFF value
 ax = fig.add_subplot(climdiffgrid[d])
 d=d+1
-cb = plt.colorbar(cs, cax=ax, label='K')
+cb = plt.colorbar(cs, cax=ax)
 
+cb.set_label(label='K', fontsize=7)
+cb.ax.tick_params(labelsize=7) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -504,6 +507,7 @@ ax = fig.add_subplot(climabsgrid[a])
 a=a+1
 cb = plt.colorbar(cs, cax=ax)
 
+cb.ax.tick_params(labelsize=7) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -530,8 +534,10 @@ cs.set_edgecolor("face")
 # plot the colorbar - DIFF value
 ax = fig.add_subplot(climdiffgrid[d])
 d=d+1
-cb = plt.colorbar(cs, cax=ax, label='K')
+cb = plt.colorbar(cs, cax=ax)
 
+cb.set_label(label='K', fontsize=7)
+cb.ax.tick_params(labelsize=7) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
