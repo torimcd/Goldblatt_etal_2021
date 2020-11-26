@@ -69,7 +69,7 @@ def map_annual_average(filebase, outloc, cam_version):
 			if not os.path.isfile(outfile):
 				infile = filebase + cam_version + '_' + c +'.nc'
 
-				syscall = 'cdo -timmean -yearmean ' + selyear + ' -select,name='+fields+' '+infile+' '+outfile
+				syscall = r"//usr//bin//cdo -timmean -yearmean " + selyear + " -select,name="+fields+" "+infile+" "+outfile
 				print(syscall)
 				os.system(syscall)
 
@@ -110,7 +110,7 @@ def map_vert_velocity(filebase, outloc, cam_version):
 			if os.path.isdir(filebase):
 				infile = filebase + cam_version + '_' + c +'.nc'
 			
-				syscall = 'cdo timmean ' + selyear + ' -sellevidx,21 -select,name=OMEGA'+' '+infile+ ' ' +outfile
+				syscall = r"//usr//bin//cdo timmean " + selyear + " -sellevidx,21 -select,name=OMEGA"+" "+infile+ " " +outfile
 				print(syscall)
 				os.system(syscall)
 
@@ -124,7 +124,7 @@ def map_vert_velocity(filebase, outloc, cam_version):
 def prep_lts(filebase, outloc, cam_version):
 	if cam_version == 'cam4':
 		outfilebase = outloc + 'c4_lts_map'
-		casenames = cases_cam5
+		casenames = cases_cam4
 
 		selyear = '-selyear,21/40'	
 	
@@ -141,9 +141,9 @@ def prep_lts(filebase, outloc, cam_version):
 	for c in casenames:
 		# set up the files to store the temporary output
 		T700 = outfilebase+'_'+ c + '_700Temp.nc'
-		outfile700 = filebase + c+'/'+outfilebase+'_'+ c + '_700.nc'
-		outfile1000 = filebase + c+'/'+outfilebase+'_'+ c + '_1000.nc'
-		outfilelts = filebase + c+'/'+outfilebase+'_'+ c + '_lts.nc'
+		outfile700 = outfilebase+'_'+ c + '_700.nc'
+		outfile1000 = outfilebase+'_'+ c + '_1000.nc'
+		outfilelts = outfilebase+'_'+ c + '_lts.nc'
 
 		# check directly if the input file exists
 		if os.path.isdir(filebase):
@@ -152,25 +152,25 @@ def prep_lts(filebase, outloc, cam_version):
 
 				if not os.path.isfile(T700):
 					# calc T at 700 hPa
-					syscall = 'cdo select,name=T,PS -sellevel,696.79629 '+infile+ ' '+T700
+					syscall = r"//usr//bin//cdo select,name=T -sellevel,696.79629 "+infile+ " " +T700
 					print(syscall)
 					os.system(syscall)
 
 				if not os.path.isfile(outfile700):
 					# calc potential temp at 700hPa
-					syscall = 'cdo timmean ' + selyear + ' -select,name=lts -expr,\'lts=(T*(1000/696.79629)^0.286)\'  '+T700+' '+outfile700
+					syscall = r"//usr//bin//cdo timmean " + selyear + " -select,name=lts -expr,\'lts=(T*(1000/696.79629)^0.286)\'  "+T700+" "+outfile700
 					print(syscall)
 					os.system(syscall)
 
 			
 				if not os.path.isfile(outfile1000):
 					# calc potential temp at surface
-					syscall = 'cdo timmean ' + selyear + ' -select,name=lts -expr,\'lts=(TS*(1000/(PS*0.01))^0.286)\'  '+infile+' '+outfile1000
+					syscall = r"//usr//bin//cdo timmean " + selyear + " -select,name=lts -expr,\'lts=(TS*(1000/(PS*0.01))^0.286)\'  "+infile+" "+outfile1000
 					print(syscall)
 					os.system(syscall)
 
 				# difference = lower tropospheric stability
-				syscall = 'cdo sub '+outfile700+' '+outfile1000 + ' ' + outfilelts
+				syscall = r"//usr//bin//cdo sub "+outfile700+" "+outfile1000 + " " + outfilelts
 				print(syscall)
 				os.system(syscall)
 
@@ -188,7 +188,7 @@ def prep_eis(filebase, outloc, cam_version):
 
 	if cam_version == 'cam4':
 		outfilebase = outloc + 'c4_eis_map'
-		casenames = cases_cam5
+		casenames = cases_cam4
 
 		selyear = '-selyear,21/40'	
 	
@@ -216,37 +216,37 @@ def prep_eis(filebase, outloc, cam_version):
 
 				if not os.path.isfile(qs850):
 					# calc saturation mixing ratio at 850 hPa
-					syscall = 'cdo timmean ' + selyear + ' -sellevidx,23 -select,name=smr -expr,\'smr=(Q/RELHUM)\'  '+infile+' '+qs850
+					syscall = r"//usr//bin//cdo timmean " + selyear + " -sellevidx,23 -select,name=smr -expr,\'smr=(Q/RELHUM)\'  "+infile+" "+qs850
 					print(syscall)
 					os.system(syscall)
 		
 				if not os.path.isfile(temp700):
 					# get temp at 700hPa
-					syscall = 'cdo timmean ' + selyear + ' -sellevidx,21 -select,name=T '+infile+' '+temp700
+					syscall = r"//usr//bin//cdo timmean " + selyear + " -sellevidx,21 -select,name=T "+infile+" "+temp700
 					print(syscall)
 					os.system(syscall)
 
 				if not os.path.isfile(tempsurf):
 					# get temp at surface
-					syscall = 'cdo timmean ' + selyear + ' -sellevidx,26 -select,name=T '+infile+' '+tempsurf
+					syscall = r"//usr//bin//cdo timmean " + selyear + " -sellevidx,26 -select,name=T "+infile+" "+tempsurf
 					print(syscall)
 					os.system(syscall)
 
 				if not os.path.isfile(z700):
 					# get height of 700hPa
-					syscall = 'cdo timmean ' + selyear + ' -sellevidx,21 -select,name=Z3 '+infile+' '+z700
+					syscall = r"//usr//bin//cdo timmean " + selyear + " -sellevidx,21 -select,name=Z3 "+infile+" "+z700
 					print(syscall)
 					os.system(syscall)
 
 				if not os.path.isfile(lcl):
 					# calc lifting condensation level
-					syscall = 'cdo  timmean ' + selyear + ' -sellevidx,26 -select,name=lcl -expr,\'lcl=((0.02+(TS-273.15)/5)*0.1*(1-RELHUM))\'  '+infile+' '+lcl
+					syscall = r"//usr//bin//cdo  timmean " + selyear + " -sellevidx,26 -select,name=lcl -expr,\'lcl=((0.02+(TS-273.15)/5)*0.1*(1-RELHUM))\'  "+infile+" "+lcl
 					print(syscall)
 					os.system(syscall)
 
 				if not os.path.isfile(tempsum):
 					# temp sum 
-					syscall = 'cdo add '+temp700+' '+tempsurf + ' '+tempsum
+					syscall = r"//usr//bin//cdo add "+temp700+" "+tempsurf + " " +tempsum
 					print(syscall)
 					os.system(syscall)
 
@@ -262,7 +262,7 @@ def zonal_average(filebase, outloc, am_version):
 		# the processed filename 
 		outfilebase = outloc + 'c4_zonal_average'	
 		# the CAM4 cases
-		casenames = cases_cam5
+		casenames = cases_cam4
 		# for CAM4 look at years 21-40
 		selyear = '-selyear,21/40'	
 
@@ -291,7 +291,7 @@ def zonal_average(filebase, outloc, am_version):
 			if not os.path.isfile(outfile):
 				infile = filebase + cam_version + '_' + c +'.nc'
 
-				syscall = 'cdo zonmean -timmean ' + selyear + ' -select,name='+infile+' '+outfile
+				syscall = r"//usr//bin//cdo zonmean -timmean "+ selyear + " -select,name="+ fields +" "+ infile+" "+outfile
 				print(syscall)
 				os.system(syscall)
 
@@ -309,8 +309,8 @@ def wetbulb_potentialtemp(filebase, outloc, cam_version):
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
 		# the processed filename 
-		outfilebase = 'c4_wetbulb'	
-		zon_outfile = 'c5_zonal_average'
+		outfilebase =  outloc + 'c4_wetbulb'	
+		zon_outfile =  outloc + 'c5_zonal_average'
 		# the CAM4 cases
 		casenames = cases_cam4
 		# for CAM4 look at years 21-40
@@ -318,8 +318,8 @@ def wetbulb_potentialtemp(filebase, outloc, cam_version):
 
 	elif cam_version == 'cam5':
 		# the processed filename 
-		outfilebase = 'c5_wetbulb'
-		zon_outfile = 'c5_zonal_average'
+		outfilebase =  outloc + 'c5_wetbulb'
+		zon_outfile =  outloc + 'c5_zonal_average'
 		# the CAM5 cases
 		casenames = cases_cam5
 		# for CAM5 look at years 31-60
@@ -332,7 +332,7 @@ def wetbulb_potentialtemp(filebase, outloc, cam_version):
 	# calc wet bulb potential temp for each case
 	for c in casenames:
 		outfile = outfilebase +'_'+ c +'.nc' # the outfile for wet bulb
-		zonfile = filebase +'/'+ zon_outfile +'_'+ c +'.nc' # the zonal averaged T file to read
+		zonfile = zon_outfile +'_'+ c +'.nc' # the zonal averaged T file to read
 
 		# initialize these here so we can use them to write out the dimensions
 		lat = []

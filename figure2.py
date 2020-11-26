@@ -226,21 +226,21 @@ lts_outfilebase = 'c4_lts_map_'
 
 c = '10'
 # all the variables we need were processed into separate files
-qs850_p = outfileloc + outfilebase+'_'+ c + 'qs850.nc'
-temp700_p = outfileloc + outfilebase+'_'+ c + 'temp700.nc'
-tempsurf_p = outfileloc + outfilebase+'_'+ c + '_tempsurf.nc'
-tempsum_p = outfileloc + outfilebase+'_'+ c + '_tempsum.nc'
-z700_p = outfileloc + outfilebase+'_'+ c + '_z700.nc'
-lcl_p = outfileloc + outfilebase+'_'+ c + '_lcl.nc'
+qs850_p = outfileloc + outfilebase+ c + '_qs850.nc'
+temp700_p = outfileloc + outfilebase+ c + '_temp700.nc'
+tempsurf_p = outfileloc + outfilebase+ c + '_tempsurf.nc'
+tempsum_p = outfileloc + outfilebase+ c + '_tempsum.nc'
+z700_p = outfileloc + outfilebase+ c + '_z700.nc'
+lcl_p = outfileloc + outfilebase+ c + '_lcl.nc'
 
 c = '08'
-qs850_e = outfileloc + outfilebase+'_'+ c + '_qs850.nc'
-temp700_e = outfileloc + outfilebase+'_'+ c + '_temp700.nc'
-tempsurf_e = outfileloc + outfilebase+'_'+ c + '_tempsurf.nc'
-tempsum_e = outfileloc + outfilebase+'_'+ c + '_tempsum.nc'
-z700_e = outfileloc + outfilebase+'_'+ c + '_z700.nc'
+qs850_e = outfileloc + outfilebase+ c + '_qs850.nc'
+temp700_e = outfileloc + outfilebase+ c + '_temp700.nc'
+tempsurf_e = outfileloc + outfilebase+ c + '_tempsurf.nc'
+tempsum_e = outfileloc + outfilebase+ c + '_tempsum.nc'
+z700_e = outfileloc + outfilebase+ c + '_z700.nc'
 
-lcl_e = outfileloc + outfilebase+'_'+ c + '_lcl.nc'
+lcl_e = outfileloc + outfilebase+ c + '_lcl.nc'
 
 # set up the arrays
 lcl = []
