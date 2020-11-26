@@ -38,7 +38,7 @@ def map_annual_average(filebase, outloc, cam_version):
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
 		# the processed filename 
-		outfilebase = outloc + '/c4_map_annual_average'	
+		outfilebase = outloc + 'c4_map_annual_average'	
 		# the CAM4 cases
 		casenames = cases_cam4
 		# for CAM4 look at years 21-40
@@ -46,7 +46,7 @@ def map_annual_average(filebase, outloc, cam_version):
 
 	elif cam_version == 'cam5':
 		# the processed filename 
-		outfilebase = outloc + '/c5_map_annual_average'
+		outfilebase = outloc + 'c5_map_annual_average'
 		# the CAM5 cases
 		casenames = cases_cam5
 		# for CAM5 look at years 31-60
@@ -85,7 +85,7 @@ def map_vert_velocity(filebase, outloc, cam_version):
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
 		# the processed filename 
-		outfilebase = outloc + '/c4_map_vert_velocity'	
+		outfilebase = outloc + 'c4_map_vert_velocity'	
 		# the CAM4 cases
 		casenames = cases_cam4
 		# for CAM4 look at years 21-40
@@ -93,7 +93,7 @@ def map_vert_velocity(filebase, outloc, cam_version):
 
 	elif cam_version == 'cam5':
 		# the processed filename 
-		outfilebase = outloc + '/c5_map_vert_velocity'
+		outfilebase = outloc + 'c5_map_vert_velocity'
 		# the CAM5 cases
 		casenames = cases_cam5
 		# for CAM5 look at years 31-60
@@ -123,13 +123,13 @@ def map_vert_velocity(filebase, outloc, cam_version):
 #-----------------------------------------------------------------------------------------#
 def prep_lts(filebase, outloc, cam_version):
 	if cam_version == 'cam4':
-		outfilebase = outloc + '/c4_lts_map'
+		outfilebase = outloc + 'c4_lts_map'
 		casenames = cases_cam5
 
 		selyear = '-selyear,21/40'	
 	
 	elif cam_version == 'cam5':
-		outfilebase = outloc + '/c5_lts_map'
+		outfilebase = outloc + 'c5_lts_map'
 		casenames = cases_cam5
 
 		selyear = '-selyear,31/60'	
@@ -187,13 +187,13 @@ def prep_eis(filebase, outloc, cam_version):
 	prep_lts(filebase, outloc, cam_version)
 
 	if cam_version == 'cam4':
-		outfilebase = outloc + '/c4_eis_map'
+		outfilebase = outloc + 'c4_eis_map'
 		casenames = cases_cam5
 
 		selyear = '-selyear,21/40'	
 	
 	elif cam_version == 'cam5':
-		outfilebase = outloc + '/c5_eis_map'
+		outfilebase = outloc + 'c5_eis_map'
 		casenames = cases_cam5
 
 		selyear = '-selyear,31/60'	
@@ -260,7 +260,7 @@ def zonal_average(filebase, outloc, am_version):
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
 		# the processed filename 
-		outfilebase = outloc + '/c4_zonal_average'	
+		outfilebase = outloc + 'c4_zonal_average'	
 		# the CAM4 cases
 		casenames = cases_cam5
 		# for CAM4 look at years 21-40
@@ -268,7 +268,7 @@ def zonal_average(filebase, outloc, am_version):
 
 	elif cam_version == 'cam5':
 		# the processed filename 
-		outfilebase = outloc + '/c5_zonal_average'
+		outfilebase = outloc + 'c5_zonal_average'
 		# the CAM5 cases
 		casenames = cases_cam5
 		# for CAM5 look at years 31-60

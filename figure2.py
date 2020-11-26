@@ -22,15 +22,15 @@ import processing_functions as pf
 
 download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
 
-filebase = download_path + 'FYSP_clouds_archive/CAM4'
-outfilebase = download_path + 'temp_data' # this is the location to save the processed netcdf files to
+filebase = download_path + 'FYSP_clouds_archive/CAM4/'
+outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
 
 
 # process the fields we're plotting
-pf.map_annual_average(filebase, outfilebase, 'cam4') # averages fields over years 31-60, retaining location so can be plotted in map view
-pf.map_vert_velocity(filebase, outfilebase, 'cam4') # the same as above but for vertical velocity selected at 700 hPa
-pf.prep_lts(filebase, outfilebase, 'cam4') # extracts and calculates LTS and saves to new file
-pf.prep_eis(filebase, outfilebase, 'cam4') # extracts and calculates EIS and saves to new file
+pf.map_annual_average(filebase, outfileloc, 'cam4') # averages fields over years 31-60, retaining location so can be plotted in map view
+pf.map_vert_velocity(filebase, outfileloc, 'cam4') # the same as above but for vertical velocity selected at 700 hPa
+pf.prep_lts(filebase, outfileloc, 'cam4') # extracts and calculates LTS and saves to new file
+pf.prep_eis(filebase, outfileloc, 'cam4') # extracts and calculates EIS and saves to new file
 
 
 # the model fields to plot
@@ -226,21 +226,21 @@ lts_outfilebase = 'c4_lts_map_'
 
 c = '10'
 # all the variables we need were processed into separate files
-qs850_p = filebase + outfilebase+'_'+ c + 'qs850.nc'
-temp700_p = filebase + outfilebase+'_'+ c + 'temp700.nc'
-tempsurf_p = filebase + outfilebase+'_'+ c + '_tempsurf.nc'
-tempsum_p = filebase + outfilebase+'_'+ c + '_tempsum.nc'
-z700_p = filebase + outfilebase+'_'+ c + '_z700.nc'
-lcl_p = filebase + outfilebase+'_'+ c + '_lcl.nc'
+qs850_p = outfileloc + outfilebase+'_'+ c + 'qs850.nc'
+temp700_p = outfileloc + outfilebase+'_'+ c + 'temp700.nc'
+tempsurf_p = outfileloc + outfilebase+'_'+ c + '_tempsurf.nc'
+tempsum_p = outfileloc + outfilebase+'_'+ c + '_tempsum.nc'
+z700_p = outfileloc + outfilebase+'_'+ c + '_z700.nc'
+lcl_p = outfileloc + outfilebase+'_'+ c + '_lcl.nc'
 
 c = '08'
-qs850_e = filebase + outfilebase+'_'+ c + '_qs850.nc'
-temp700_e = filebase + outfilebase+'_'+ c + '_temp700.nc'
-tempsurf_e = filebase + outfilebase+'_'+ c + '_tempsurf.nc'
-tempsum_e = filebase + outfilebase+'_'+ c + '_tempsum.nc'
-z700_e = filebase + outfilebase+'_'+ c + '_z700.nc'
+qs850_e = outfileloc + outfilebase+'_'+ c + '_qs850.nc'
+temp700_e = outfileloc + outfilebase+'_'+ c + '_temp700.nc'
+tempsurf_e = outfileloc + outfilebase+'_'+ c + '_tempsurf.nc'
+tempsum_e = outfileloc + outfilebase+'_'+ c + '_tempsum.nc'
+z700_e = outfileloc + outfilebase+'_'+ c + '_z700.nc'
 
-lcl_e = filebase + outfilebase+'_'+ c + '_lcl.nc'
+lcl_e = outfileloc + outfilebase+'_'+ c + '_lcl.nc'
 
 # set up the arrays
 lcl = []
@@ -299,7 +299,7 @@ if os.path.isfile(z700_p):
 
 #GET lts for S/So = 0.8
 c = '10'
-dsloc = filebase + lts_outfilebase+'_'+ c + '_sub.nc'
+dsloc = outfileloc + lts_outfilebase+'_'+ c + '_sub.nc'
 if os.path.isfile(dsloc):
 
 	# open the file and get out the variable
@@ -309,7 +309,7 @@ if os.path.isfile(dsloc):
 
 #GET lts for S/So = 1.0
 c = '10'
-dsloc = filebase + lts_outfilebase+'_'+ c + '_sub.nc'
+dsloc = outfileloc + lts_outfilebase+'_'+ c + '_sub.nc'
 if os.path.isfile(dsloc):
 
 	# open the file and get out the variable
