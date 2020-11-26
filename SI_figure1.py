@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Author: Victoria McDonald
 email: vmcd@atmos.washington.edu

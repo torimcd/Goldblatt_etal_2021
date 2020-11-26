@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Author: Victoria McDonald
 email: vmcd@atmos.washington.edu
@@ -31,13 +32,13 @@ cases_cam5 = {'09','10'}
 #-----------------------------------------------------------------------------------------#
 # This function is used to prepare the model output to be plotted on the maps in figure 2
 #-----------------------------------------------------------------------------------------#
-def map_annual_average(filebase, cam_version):
+def map_annual_average(filebase, outloc, cam_version):
 	# This function calculates the annual average for all variables we're mapping in figs 2 and 4 that aren't on a pressure level
 
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
 		# the processed filename 
-		outfilebase = 'c4_map_annual_average'	
+		outfilebase = outloc + '/c4_map_annual_average'	
 		# the CAM4 cases
 		casenames = cases_cam4
 		# for CAM4 look at years 21-40
@@ -45,7 +46,7 @@ def map_annual_average(filebase, cam_version):
 
 	elif cam_version == 'cam5':
 		# the processed filename 
-		outfilebase = 'c5_map_annual_average'
+		outfilebase = outloc + '/c5_map_annual_average'
 		# the CAM5 cases
 		casenames = cases_cam5
 		# for CAM5 look at years 31-60
@@ -60,7 +61,7 @@ def map_annual_average(filebase, cam_version):
 
 	# average the fields for each case
 	for c in casenames:
-		outfile = filebase +'/'+ outfilebase +'_'+ c +'.nc'
+		outfile = outfilebase +'_'+ c +'.nc'
 
 		# check directly if the input file exists
 		if os.path.isdir(filebase):
@@ -80,11 +81,11 @@ def map_annual_average(filebase, cam_version):
 # velocity is on multiple pressure levels, so we need to choose one to plot it on the map.
 # This code selects 700 hPa as the level to plot the vertical velocity
 #-----------------------------------------------------------------------------------------#
-def map_vert_velocity(filebase, cam_version):
+def map_vert_velocity(filebase, outloc, cam_version):
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
 		# the processed filename 
-		outfilebase = 'c4_map_vert_velocity'	
+		outfilebase = outloc + '/c4_map_vert_velocity'	
 		# the CAM4 cases
 		casenames = cases_cam4
 		# for CAM4 look at years 21-40
@@ -92,7 +93,7 @@ def map_vert_velocity(filebase, cam_version):
 
 	elif cam_version == 'cam5':
 		# the processed filename 
-		outfilebase = 'c5_map_vert_velocity'
+		outfilebase = outloc + '/c5_map_vert_velocity'
 		# the CAM5 cases
 		casenames = cases_cam5
 		# for CAM5 look at years 31-60
@@ -102,7 +103,7 @@ def map_vert_velocity(filebase, cam_version):
 		print('must supply a supported CAM version - cam4 or cam5')
 
 	for c in casenames:
-		outfile = filebase +'/'+ outfilebase +'_'+ c +'.nc'
+		outfile = outfilebase +'_'+ c +'.nc'
 	
 		# check directly if the file exists
 		if not os.path.isfile(outfile):
@@ -120,15 +121,15 @@ def map_vert_velocity(filebase, cam_version):
 # 700 hPa, so we first select the temperature and pressure at 700 hPa, then calculate potential
 # temperature at that level and at the surface, and finally subtract them.
 #-----------------------------------------------------------------------------------------#
-def prep_lts(filebase, cam_version):
+def prep_lts(filebase, outloc, cam_version):
 	if cam_version == 'cam4':
-		outfilebase = 'c4_lts_map'
+		outfilebase = outloc + '/c4_lts_map'
 		casenames = cases_cam5
 
 		selyear = '-selyear,21/40'	
 	
 	elif cam_version == 'cam5':
-		outfilebase = 'c5_lts_map'
+		outfilebase = outloc + '/c5_lts_map'
 		casenames = cases_cam5
 
 		selyear = '-selyear,31/60'	
@@ -139,7 +140,7 @@ def prep_lts(filebase, cam_version):
 
 	for c in casenames:
 		# set up the files to store the temporary output
-		T700 = filebase +'/'+outfilebase+'_'+ c + '_700Temp.nc'
+		T700 = outfilebase+'_'+ c + '_700Temp.nc'
 		outfile700 = filebase + c+'/'+outfilebase+'_'+ c + '_700.nc'
 		outfile1000 = filebase + c+'/'+outfilebase+'_'+ c + '_1000.nc'
 		outfilelts = filebase + c+'/'+outfilebase+'_'+ c + '_lts.nc'
@@ -181,18 +182,18 @@ def prep_lts(filebase, cam_version):
 # requires calculating the variables necessary to calculate the moist potential temperature 
 # gradient.
 #-----------------------------------------------------------------------------------------#
-def prep_eis(filebase, cam_version):
+def prep_eis(filebase, outloc, cam_version):
 	# EIS uses LTS so run the LTS prep if not done already
-	prep_lts(filebase, cam_version)
+	prep_lts(filebase, outloc, cam_version)
 
 	if cam_version == 'cam4':
-		outfilebase = 'c4_eis_map'
+		outfilebase = outloc + '/c4_eis_map'
 		casenames = cases_cam5
 
 		selyear = '-selyear,21/40'	
 	
 	elif cam_version == 'cam5':
-		outfilebase = 'c5_eis_map'
+		outfilebase = outloc + '/c5_eis_map'
 		casenames = cases_cam5
 
 		selyear = '-selyear,31/60'	
@@ -201,12 +202,12 @@ def prep_eis(filebase, cam_version):
 		print('must supply a supported CAM version - cam4 or cam5')
 
 	for c in casenames:
-		qs850 = filebase + outfilebase+'_'+ c + '_qs850.nc'
-		temp700 = filebase + outfilebase+'_'+ c + '_temp700.nc'
-		tempsurf = filebase + outfilebase+'_'+ c + '_tempsurf.nc'
-		tempsum = filebase + outfilebase+'_'+ c + '_tempsum.nc'
-		z700 = filebase + outfilebase+'_'+ c + '_z700.nc'
-		lcl = filebase + outfilebase+'_'+ c + '_lcl.nc'
+		qs850 = outfilebase+'_'+ c + '_qs850.nc'
+		temp700 = outfilebase+'_'+ c + '_temp700.nc'
+		tempsurf = outfilebase+'_'+ c + '_tempsurf.nc'
+		tempsum = outfilebase+'_'+ c + '_tempsum.nc'
+		z700 = outfilebase+'_'+ c + '_z700.nc'
+		lcl = outfilebase+'_'+ c + '_lcl.nc'
 
 		# check directly if the mergetime file exists
 		if os.path.isdir(filebase):
@@ -253,13 +254,13 @@ def prep_eis(filebase, cam_version):
 #---------------------------------------------------------------------------------------------#
 # This function is used to prepare the model output to be plotted zonally averaged in figure 3
 #---------------------------------------------------------------------------------------------#
-def zonal_average(filebase, cam_version):
+def zonal_average(filebase, outloc, am_version):
 	# This function calculates the annual average for all variables we're mapping in figs 2 and 4 that aren't on a pressure level
 
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
 		# the processed filename 
-		outfilebase = 'c4_zonal_average'	
+		outfilebase = outloc + '/c4_zonal_average'	
 		# the CAM4 cases
 		casenames = cases_cam5
 		# for CAM4 look at years 21-40
@@ -267,7 +268,7 @@ def zonal_average(filebase, cam_version):
 
 	elif cam_version == 'cam5':
 		# the processed filename 
-		outfilebase = 'c5_zonal_average'
+		outfilebase = outloc + '/c5_zonal_average'
 		# the CAM5 cases
 		casenames = cases_cam5
 		# for CAM5 look at years 31-60
@@ -282,7 +283,7 @@ def zonal_average(filebase, cam_version):
 
 	# average the fields for each case
 	for c in casenames:
-		outfile = filebase +'/'+ outfilebase +'_'+ c +'.nc'
+		outfile = outfilebase +'_'+ c +'.nc'
 
 		# check directly if the input file exists
 		if os.path.isdir(filebase):
@@ -300,10 +301,10 @@ def zonal_average(filebase, cam_version):
 #--------------------------------------------------------------------------#
 # This function calculates the wet bulb potential temperature for figure 3
 #-------------------------------------------------------------------------#
-def wetbulb_potentialtemp(filebase, cam_version):
+def wetbulb_potentialtemp(filebase, outloc, cam_version):
 
 	# Wet bulb uses zonally averaged T so run the that first if not done already
-	zonal_average(filebase, cam_version)
+	zonal_average(filebase, outloc, cam_version)
 
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
@@ -330,7 +331,7 @@ def wetbulb_potentialtemp(filebase, cam_version):
 
 	# calc wet bulb potential temp for each case
 	for c in casenames:
-		outfile = filebase +'/'+ outfilebase +'_'+ c +'.nc' # the outfile for wet bulb
+		outfile = outfilebase +'_'+ c +'.nc' # the outfile for wet bulb
 		zonfile = filebase +'/'+ zon_outfile +'_'+ c +'.nc' # the zonal averaged T file to read
 
 		# initialize these here so we can use them to write out the dimensions

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Author: Victoria McDonald
 email: vmcd@atmos.washington.edu
@@ -5,6 +7,8 @@ website: http://torimcd.github.com
 license: BSD
 
 """
+import matplotlib
+matplotlib.use("Agg")
 
 import os
 import sys
@@ -16,17 +20,17 @@ from matplotlib import ticker
 from mpl_toolkits.basemap import Basemap
 import processing_functions as pf
 
-download_path = '/Users/victoria/projects/data/fysp_clouds/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
+download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
 
-filebase = download_path + '/FYSP_clouds_archive/CAM4'
-filebase = download_path # FOR TESTING, REMOVE FOR DATA ARCHIVE
+filebase = download_path + 'FYSP_clouds_archive/CAM4'
+outfilebase = download_path + 'temp_data' # this is the location to save the processed netcdf files to
 
 
 # process the fields we're plotting
-pf.map_annual_average(filebase, 'cam4') # averages fields over years 31-60, retaining location so can be plotted in map view
-pf.map_vert_velocity(filebase, 'cam4') # the same as above but for vertical velocity selected at 700 hPa
-pf.prep_lts(filebase, 'cam4') # extracts and calculates LTS and saves to new file
-pf.prep_eis(filebase, 'cam4') # extracts and calculates EIS and saves to new file
+pf.map_annual_average(filebase, outfilebase, 'cam4') # averages fields over years 31-60, retaining location so can be plotted in map view
+pf.map_vert_velocity(filebase, outfilebase, 'cam4') # the same as above but for vertical velocity selected at 700 hPa
+pf.prep_lts(filebase, outfilebase, 'cam4') # extracts and calculates LTS and saves to new file
+pf.prep_eis(filebase, outfilebase, 'cam4') # extracts and calculates EIS and saves to new file
 
 
 # the model fields to plot
