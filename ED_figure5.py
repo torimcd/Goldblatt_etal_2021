@@ -20,6 +20,7 @@ from matplotlib import ticker
 from mpl_toolkits.basemap import Basemap
 import processing_functions as pf
 
+
 # ------------------------------------------------------------------------
 # change this section to match where you downloaded the model output files 
 # ------------------------------------------------------------------------
@@ -29,49 +30,47 @@ download_path = '/home/vmcd/' # enter the path to the directory where you downlo
 filebase = download_path + 'FYSP_clouds_archive/CAM4/'
 outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
 
-# ------------------------------------
-
 # the fields we want to average for our plots  - these must not depend on pressure level
 fields = 'CLDHGH,CLDLOW,LHFLX,LWCF,PRECT,SHFLX,SWCF,TS'
 
 # process the fields we're plotting
-pf.map_annual_average(filebase, outfileloc, 'cam4', fields) # averages fields over years 31-60, retaining location so can be plotted in map view
-pf.map_total_waterpath(filebase, outfileloc, 'cam4') # the same as above but for vertical velocity selected at 700 hPa
-
+pf.map_annual_average(filebase, outfileloc, 'cam5', fields) # averages fields over years 31-60, retaining location so can be plotted in map view
 
 
 # cloud climatology
-cloudfields= ['CLDHGH','ICLDTWP','LWCF','CLDLOW','ICLDTWP','SWCF']
+cloudfields= ['CLDHGH', 'LWCF', 'CLDLOW', 'SWCF']
 
-cloudcmaps=['bone', 'BrBG', 'BuPu', 'BrBG', 'PuRd', 'RdBu_r', 'bone', 'BrBG', 'BuPu', 'BrBG', 'OrRd_r', 'RdBu_r']
+cloudcmaps=['bone', 'BrBG', 'PuRd', 'RdBu_r', 'bone', 'BrBG', 'OrRd_r', 'RdBu_r']
 
-cloudfilenames = ['c4_map_annual_average','c4_map_wp_high','c4_map_annual_average','c4_map_annual_average','c4_map_wp_low', 'c4_map_annual_average']
+cloudfilenames = ['c5_map_annual_average', 'c5_map_annual_average', 'c5_map_annual_average', 'c5_map_annual_average']
 
-cloudletters = ['a', 'b', 'c', 'd', 'e', 'f']
-cloudheadings = ['High Cloud Fraction', 'Total High Cloud Water Path', 'Longwave Cloud Forcing', 'Low Cloud Fraction', 'Total Low Cloud Water Path','Shortwave Cloud Forcing']
+cloudletters = ['a', 'b', 'c', 'd']
+cloudheadings = ['High Cloud Fraction',	'Longwave Cloud Forcing', 'Low Cloud Fraction', 'Shortwave Cloud Forcing']
 
-cloudaxislabels = [r'$\mathsf{Fraction}$', r'$\mathsf{g/m^2}$', r'$\mathsf{W/m^2}$', r'$\mathsf{Fraction}$', r'$\mathsf{g/m^2}$', r'$\mathsf{W/m^2}$']
+cloudaxislabels = [r'$\mathrm{Fraction}$', r'$\mathrm{W/m^2}$', r'$\mathrm{Fraction}$', r'$\mathrm{W/m^2}$']
 
-cloudvmins = [0,-0.5, 0, -300, 0, -60, 0, -0.5, 0,-300, -110, -60]
-cloudvmaxs = [1, 0.5, 600, 300, 100, 60, 1, 0.5, 700, 300, 0, 60]
+cloudvmins = [0,-0.5, 0, -60, 0, -0.5, -110, -60]
+cloudvmaxs = [1, 0.5, 100, 60, 1, 0.5, 0, 60]
 
 
 #create figure - use figsize=(8.5, 9.5) to make bigger
 #fig = plt.figure(figsize=(3.46457, 4.48356))
-fig = plt.figure(figsize=(8.5, 9.5))
+fig = plt.figure(figsize=(8.5, 6.25))
+
 
 # container with 2 rows of 2 columns, first column is grid of absolute value plots, second column is diff plots. First row is cloud climatology, second row is model climatology
 outer_grid = gridspec.GridSpec(1, 2, wspace=0.2, hspace=0.1, width_ratios=(2,1))
 
 # first two columns, absolute value plots
-cldabsgrid = gridspec.GridSpecFromSubplotSpec(6, 3, subplot_spec=outer_grid[0], wspace=0.0, hspace=0.45, width_ratios=(15,15,1))
+cldabsgrid = gridspec.GridSpecFromSubplotSpec(4, 3, subplot_spec=outer_grid[0], wspace=0.0, hspace=0.45, width_ratios=(15,15,1))
 
 # third colum, anomaly plots
-clddiffgrid = gridspec.GridSpecFromSubplotSpec(6, 2, subplot_spec=outer_grid[1], wspace=0.0, hspace=0.45, width_ratios=(25,1))	
+clddiffgrid = gridspec.GridSpecFromSubplotSpec(4, 2, subplot_spec=outer_grid[1], wspace=0.0, hspace=0.45, width_ratios=(25,1))	
 
 
 
 # -------------------------CLOUD CLIMATOLOGY -------------------------
+
 
 # keep track of which field/row we're on
 n=0
@@ -83,7 +82,7 @@ d = 0
 v = 0
 
 present = '_10'
-eight = '_08'
+eight = '_09'
 
 for p in cloudfields:
 	f = cloudfilenames[n]
@@ -91,18 +90,18 @@ for p in cloudfields:
 
 	presentcase = outfileloc + f + present +'.nc'
 	eightcase = outfileloc + f + eight +'.nc'
-
-	#plot the data - PRESENT
+	
+	# plot the data - PRESENT
 	ax = fig.add_subplot(cldabsgrid[a])
 	a=a+1
 
 	ds = netCDF4.Dataset(presentcase)
-	presfld = ds.variables[p][:]
-	lats = ds.variables['lat'][:]
 	lons = ds.variables['lon'][:]
-
-	ds.close() #close the file	
-
+	lats = ds.variables['lat'][:]
+	presfld = ds.variables[cloudfield][:]
+	units = ds.variables[cloudfield].units
+	
+	ds.close() #close the file
 
 	# setup the map
 	m = Basemap(lat_0=0,lon_0=0, ax=ax)
@@ -112,6 +111,7 @@ for p in cloudfields:
 	meridians = [-90., 0., 90.]
 	m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
 	m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
+		
 		
 	# Create 2D lat/lon arrays for Basemap
 	lon2d, lat2d = np.meshgrid(lons, lats)
@@ -134,12 +134,12 @@ for p in cloudfields:
 	a=a+1
 
 	ds = netCDF4.Dataset(eightcase)
-	efld = ds.variables[p][:]
-	lats = ds.variables['lat'][:]
 	lons = ds.variables['lon'][:]
-
+	lats = ds.variables['lat'][:]
+	efld = ds.variables[cloudfield][:]
+	units = ds.variables[cloudfield].units
+	
 	ds.close() #close the file
-
 	
 	# setup the map
 	m = Basemap(lat_0=0,lon_0=0, ax=ax)
@@ -149,6 +149,7 @@ for p in cloudfields:
 	meridians = [-90., 0., 90.]
 	m.drawparallels(parallels, labels=[False ,False,False, False], fontsize=6)
 	m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
+		
 		
 	# Create 2D lat/lon arrays for Basemap
 	lon2d, lat2d = np.meshgrid(lons, lats)
@@ -184,6 +185,7 @@ for p in cloudfields:
 		m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
 		m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
+		
 		# Create 2D lat/lon arrays for Basemap
 		lon2d, lat2d = np.meshgrid(lons, lats)
 	
@@ -213,5 +215,5 @@ for p in cloudfields:
 
 plt.show()
 
-fig.savefig("figure4.pdf", bbox_inches='tight')
+fig.savefig("ED_figure5.pdf", bbox_inches='tight')
 

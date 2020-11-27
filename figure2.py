@@ -26,8 +26,11 @@ filebase = download_path + 'FYSP_clouds_archive/CAM4/'
 outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
 
 
+# the fields we want to average for our plots  - these must not depend on pressure level
+fields = 'CLDHGH,CLDLOW,LHFLX,LWCF,PRECT,SHFLX,SWCF,TS'
+
 # process the fields we're plotting
-pf.map_annual_average(filebase, outfileloc, 'cam4') # averages fields over years 31-60, retaining location so can be plotted in map view
+pf.map_annual_average(filebase, outfileloc, 'cam4', fields) # averages fields over years 31-60, retaining location so can be plotted in map view
 pf.map_vert_velocity(filebase, outfileloc, 'cam4') # the same as above but for vertical velocity selected at 700 hPa
 pf.prep_lts(filebase, outfileloc, 'cam4') # extracts and calculates LTS and saves to new file
 pf.prep_eis(filebase, outfileloc, 'cam4') # extracts and calculates EIS and saves to new file
@@ -60,7 +63,8 @@ eis_qs850_file = 'c4_eis_map_qs850.nc'
 eis_ = ''
 
 #create figure - use figsize=(8.5, 11) to make bigger
-fig = plt.figure(figsize=(3.46457, 4.48356))
+#fig = plt.figure(figsize=(3.46457, 4.48356))
+fig = plt.figure(figsize=(8.5,11))
 
 # set up container 
 outer_grid = gridspec.GridSpec(1, 2, wspace=0.2, hspace=0.1, width_ratios=(2,1))
@@ -126,6 +130,11 @@ for p in climfields:
 		m = Basemap(lat_0=0,lon_0=0, ax=ax)
 		m.drawcoastlines()
 		m.drawcountries()
+
+		parallels = [-45, 0, 45]
+		meridians = [-90., 0., 90.]
+		m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+		m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 		# Create 2D lat/lon arrays for Basemap
 		lon2d, lat2d = np.meshgrid(lons, lats)
@@ -139,7 +148,7 @@ for p in climfields:
 		# add letter annotation
 		plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 		# add heading
-		plt.text(0.55, 1.05, climheadings[n], fontsize=5, transform=ax.transAxes)
+		plt.text(0.55, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
 
 	# plot the S/So = 0.8 case
 	ax = fig.add_subplot(climabsgrid[a])
@@ -166,6 +175,10 @@ for p in climfields:
 		m = Basemap(lat_0=0,lon_0=0, ax=ax)
 		m.drawcoastlines()
 		m.drawcountries()
+		parallels = [-45, 0, 45]
+		meridians = [-90., 0., 90.]
+		m.drawparallels(parallels, labels=[False ,False,False, False], fontsize=6)
+		m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 		# Create 2D lat/lon arrays for Basemap
 		lon2d, lat2d = np.meshgrid(lons, lats)
@@ -196,6 +209,10 @@ for p in climfields:
 		m = Basemap(lat_0=0,lon_0=0, ax=ax)
 		m.drawcoastlines()
 		m.drawcountries()
+		parallels = [-45, 0, 45]
+		meridians = [-90., 0., 90.]
+		m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+		m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 		# Create 2D lat/lon arrays for Basemap
 		lon2d, lat2d = np.meshgrid(lons, lats)
@@ -220,7 +237,6 @@ for p in climfields:
 
 	# go to next field/row
 	n=n+1
-
 
 
 # EIS is a special case so we plot it separately here ------------
@@ -384,6 +400,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -397,7 +417,7 @@ cs.set_edgecolor("face")
 # add letter annotation
 plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.55, 1.05, climheadings[n], fontsize=5, transform=ax.transAxes)
+plt.text(0.55, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
 
 # Plot LTS Eight **************************** 
 ax = fig.add_subplot(climabsgrid[a])
@@ -407,6 +427,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[False ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -436,6 +460,10 @@ d=d+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -469,6 +497,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -482,7 +514,7 @@ cs.set_edgecolor("face")
 # add letter annotation
 plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.55, 1.05, climheadings[n], fontsize=5, transform=ax.transAxes)
+plt.text(0.55, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
 
 # Plot EIS Eight **************************** 
 ax = fig.add_subplot(climabsgrid[a])
@@ -492,6 +524,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[False ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -521,6 +557,10 @@ d=d+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)

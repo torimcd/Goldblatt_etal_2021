@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
+
+"""
+Author: Victoria McDonald
+email: vmcd@atmos.washington.edu
+website: http://torimcd.github.com
+license: BSD
+
+"""
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 
 import os
 import sys
@@ -10,6 +18,22 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib import ticker
 from mpl_toolkits.basemap import Basemap
+import processing_functions as pf
+
+
+download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
+
+filebase = download_path + 'FYSP_clouds_archive/CAM5/'
+outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
+
+# the fields we want to average for our plots  - these must not depend on pressure level
+fields = 'CLDHGH,CLDLOW,LHFLX,LWCF,PRECC,PRECL,SHFLX,SWCF,TS'
+
+# process the fields we're plotting
+pf.map_annual_average(filebase, outfileloc, 'cam5', fields) # averages fields over years 31-60, retaining location so can be plotted in map view
+pf.map_vert_velocity(filebase, outfileloc, 'cam5') # the same as above but for vertical velocity selected at 700 hPa
+pf.prep_lts(filebase, outfileloc, 'cam5') # extracts and calculates LTS and saves to new file
+pf.prep_eis(filebase, outfileloc, 'cam5') # extracts and calculates EIS and saves to new file
 
 
 # model climatology
@@ -17,39 +41,40 @@ climfields= ['TS', 'LHFLX', 'SHFLX']
 
 climcmaps=['plasma', 'RdBu_r', 'YlOrBr', 'RdBu_r', 'YlOrBr', 'RdBu_r']
 
-climfilenames = ['map_annual_average', 'map_annual_average', 'map_annual_average', 'mapvertvelc5']
+climfilenames = ['c5_map_annual_average', 'c5_map_annual_average', 'c5_map_annual_average']
 climletters = ['a', 'b','c','d','e','f','g']
 climheadings = ['Surface Temperature', 'Latent Heat Flux', 'Sensible Heat Flux', 'Total Precipitation Rate', 'Vertical Velocity at 700 hPa',  'Lower Tropospheric Stability', 'Estimated Inversion Strength']
+
+# set the labels on the colorbars
+units_all = [r'$\mathsf{K}$', r'$\mathsf{W/m^2}$', r'$\mathsf{W/m^2}$', r'$\mathsf{m/yr}$', r'$\mathsf{hPa/s}$', r'$\mathsf{K}$', r'$\mathsf{K}$']
 
 
 climvmins = [220,-10, 0, -75, 0, -75, -12, -6]
 climvmaxs = [320, 10, 250, 75, 250, 75, 12, 6]
 
-eis_lcl_file = 'eis_map_lcl.nc'
-eis_qs850_file = 'eis_map_qs850.nc'
+# calculating EIS is more involved so there are separate processed files to read for these maps
+eis_lcl_file = 'c5_eis_map_lcl.nc'
+eis_qs850_file = 'c5_eis_map_qs850.nc'
 eis_ = ''
 
-filebase = '/nazko/home/shared/vmcd/modelOutput/gcmexpt/CAM5/'
+#create figure - use figsize=(8.5, 11) to make bigger
+#fig = plt.figure(figsize=(3.46457, 4.48356))
+fig = plt.figure(figsize=(8.5,11))
 
-present = '1.0'
-eight = '0.9'
-
-#create plot
-fig = plt.figure(figsize=(8.5, 11))
-
-# container with 2 rows of 2 columns, first column is grid of absolute value plots, second column is diff plots. First row is cloud climatology, second row is model climatology
+# set up container 
 outer_grid = gridspec.GridSpec(1, 2, wspace=0.2, hspace=0.1, width_ratios=(2,1))
 
-
 # first two columns, absolute value plots
-climabsgrid = gridspec.GridSpecFromSubplotSpec(7, 3, subplot_spec=outer_grid[0], wspace=0.0, hspace=0.4, width_ratios=(25,25,1))
+climabsgrid = gridspec.GridSpecFromSubplotSpec(7, 3, subplot_spec=outer_grid[0], wspace=0.0, hspace=0.4, width_ratios=(15,15,1))
 
 # third colum, anomaly plots
-climdiffgrid = gridspec.GridSpecFromSubplotSpec(7, 2, subplot_spec=outer_grid[1], wspace=0.0, hspace=0.4, width_ratios=(35,1))	
+climdiffgrid = gridspec.GridSpecFromSubplotSpec(7, 2, subplot_spec=outer_grid[1], wspace=0.0, hspace=0.4, width_ratios=(25,1))	
 
 
 
-# ----------------------- MODEL CLIMATOLOGY -----------------------------
+# ----------------------------
+# Model Climatology
+#-----------------------------
 
 # keep track of which field/row we're on
 n=0
@@ -57,38 +82,41 @@ n=0
 a = 0
 # keep track of which gridspace/column we're plotting in for diff		
 d = 0
-# keep track of which vmin/max we're on
+# keep track of which vmin/max we're on for the colorbar
 v = 0
 
+present = '_10'
+eight = '_09' # lowest S/S0 CAM5 run is 0.9
 
-
+# get the data for the first five fields
 for p in climfields:
 	f = climfilenames[n]
-
 	climfield = climfields[n]
-	presentcase = filebase + present+'/'+f+'.nc'
-	eightcase = filebase + eight+'/'+f+'.nc'
 
-	if f == 'mapvertvelc5':
-		presentcase = '/home/vmcd/projects/output/mapvertvelc5_1.0.nc'
-		eightcase = '/home/vmcd/projects/output/mapvertvelc5_0.9.nc'
+	# get out the data for the 1.0 S/So and 0.8 S/So
+	presentcase = outfileloc + f + present +'.nc'
+	eightcase = outfileloc + f + eight +'.nc'
 
-
-	#plot the data - PRESENT
-	#ax = grid[a]
-
+	
+	# add the subplot for this field
 	ax = fig.add_subplot(climabsgrid[a])
 	a=a+1
 
+	# plot the S/So = 1.0 case
 	if os.path.isfile(presentcase):
 		# open the file and get out some variables
 		dsyear = netCDF4.Dataset(presentcase)
 		lons = dsyear.variables['lon'][:]
 		lats = dsyear.variables['lat'][:]
-		presfld = dsyear.variables[climfield][:]
+		presfld = dsyear.variables[climfield][:] # presfld is the present day 1.0 field
 		units = dsyear.variables[climfield].units
 	
 		dsyear.close() #close the file
+
+		# scale it so the units consistent
+		if units == 'm/s':
+			presfld = presfld*31540000
+			units = 'm/yr'
 
 		if units == 'Pa/s':
 			presfld = presfld*100
@@ -98,22 +126,26 @@ for p in climfields:
 		m = Basemap(lat_0=0,lon_0=0, ax=ax)
 		m.drawcoastlines()
 		m.drawcountries()
+		parallels = [-45, 0, 45]
+		meridians = [-90., 0., 90.]
+		m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+		m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 		# Create 2D lat/lon arrays for Basemap
 		lon2d, lat2d = np.meshgrid(lons, lats)
 	
-		# Plot the data
+		# Plot the data -- rasterized=true makes the image much smaller so it renders quickly
 		cs = m.pcolormesh(lon2d,lat2d,np.squeeze(presfld), cmap=climcmaps[v], latlon='True', vmin=climvmins[v], vmax=climvmaxs[v], rasterized=True)
 	
-		# This is the fix for the white lines between contour levels
+		# This removes white lines between contour levels
 		cs.set_edgecolor("face")
 		
 		# add letter annotation
-		plt.text(-0.10, 1.0, climletters[n], fontsize=12, fontweight="bold", transform=ax.transAxes)
+		plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 		# add heading
-		plt.text(0.65, 1.05, climheadings[n], fontsize=12, transform=ax.transAxes)
+		plt.text(0.55, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
 
-	#plot the data - EIGHT
+	# plot the S/So = 0.8 case
 	ax = fig.add_subplot(climabsgrid[a])
 	a=a+1
 
@@ -124,16 +156,24 @@ for p in climfields:
 		lats = dsyear.variables['lat'][:]
 		efld = dsyear.variables[climfield][:]
 		units = dsyear.variables[climfield].units
-	
-	
+
+		if units == 'm/s':
+			efld = efld*31540000
+			units= 'm/yr'
+
 		if units == 'Pa/s':
 			efld = efld*100
 			units = 'hPa/s'
-
+	
+	
 		# setup the map
 		m = Basemap(lat_0=0,lon_0=0, ax=ax)
 		m.drawcoastlines()
 		m.drawcountries()
+		parallels = [-45, 0, 45]
+		meridians = [-90., 0., 90.]
+		m.drawparallels(parallels, labels=[False ,False,False, False], fontsize=6)
+		m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 		# Create 2D lat/lon arrays for Basemap
 		lon2d, lat2d = np.meshgrid(lons, lats)
@@ -150,12 +190,12 @@ for p in climfields:
 		a=a+1
 		cb = plt.colorbar(cs, cax=ax)
 
+		cb.ax.tick_params(labelsize=6) 
 		tick_locator = ticker.MaxNLocator(nbins=5)
 		cb.locator = tick_locator
 		cb.update_ticks()
-		
 
-	#plot the data - DIFF
+	# plot the difference field, 0.8 - 1.0
 	ax = fig.add_subplot(climdiffgrid[d])
 	d=d+1
 	if os.path.isfile(eightcase):
@@ -164,6 +204,10 @@ for p in climfields:
 		m = Basemap(lat_0=0,lon_0=0, ax=ax)
 		m.drawcoastlines()
 		m.drawcountries()
+		parallels = [-45, 0, 45]
+		meridians = [-90., 0., 90.]
+		m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+		m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 		# Create 2D lat/lon arrays for Basemap
 		lon2d, lat2d = np.meshgrid(lons, lats)
@@ -178,8 +222,10 @@ for p in climfields:
 		# plot the colorbar - DIFF value
 		ax = fig.add_subplot(climdiffgrid[d])
 		d=d+1
-		cb = plt.colorbar(cs, cax=ax, label=units)
+		cb = plt.colorbar(cs, cax=ax)
 
+		cb.set_label(label=units_all[n], fontsize=6)
+		cb.ax.tick_params(labelsize=6) 
 		tick_locator = ticker.MaxNLocator(nbins=5)
 		cb.locator = tick_locator
 		cb.update_ticks()
@@ -188,10 +234,12 @@ for p in climfields:
 	n=n+1
 
 
-# Special Case PREC -----------------------
 
-presentcase = filebase + present+'/map_annual_average.nc'
-eightcase = filebase + eight+'/map_annual_average.nc'
+# ----------------------------
+# Precip is a special case
+#-----------------------------
+presentcase = outfileloc + '/c5_map_annual_average' + present + '.nc'
+eightcase = outfileloc +'/c5_map_annual_average' + eight + '.nc'
 
 
 prectotalpres = []
@@ -218,16 +266,18 @@ if os.path.isfile(eightcase):
 
 	prectotal = eight_precc + eight_precl
 
-
 prectotaldiff = prectotal - prectotalpres
 
 ##    -----------------------------
 
 
-## Special Case Omega -----------
+# ----------------------------
+# Omega is a special case
+#-----------------------------
 
-presentcase = '/home/vmcd/projects/output/mapvertvelc5_1.0.nc'
-eightcase = '/home/vmcd/projects/output/mapvertvelc5_0.9.nc'
+presentcase = outfileloc + 'c5_map_vert_velocity' + present + '.nc'
+
+eightcase = outfileloc + 'c5_map_vert_velocity' + eight + '.nc'
 
 
 if os.path.isfile(presentcase):
@@ -250,8 +300,7 @@ if os.path.isfile(eightcase):
 	lons = dsyear.variables['lon'][:]
 	lats = dsyear.variables['lat'][:]
 	e_omega = dsyear.variables['OMEGA'][:]
-	units = dsyear.variables['OMEGA'].units
-	
+	units = dsyear.variables['OMEGA'].units	
 	
 	if units == 'Pa/s':
 		e_omega = e_omega*100
@@ -259,29 +308,33 @@ if os.path.isfile(eightcase):
 	
 omega_diff = e_omega - pres_omega
 
-##    ----------------------------
 
 
-# Special Case - EIS ------------
-outfilebase = 'eis_map_'
-lts_outfilebase = 'lts_map_'
+# ----------------------------
+# EIS is a special case
+#-----------------------------
+outfilebase = 'c5_eis_map'
+lts_outfilebase = 'c5_lts_map'
 
 
-qs850_p = filebase + present+'/'+outfilebase+'_qs850.nc'
-temp700_p = filebase + present+'/'+outfilebase+'_temp700.nc'
-tempsurf_p = filebase + present+'/'+outfilebase+'_tempsurf.nc'
-tempsum_p = filebase + present+'/'+outfilebase+'_tempsum.nc'
-z700_p = filebase + present+'/'+outfilebase+'_z700.nc'
-lcl_p = filebase + present+'/'+outfilebase+'_lcl.nc'
+# all the variables we need were processed into separate files
+qs850_p = outfileloc + outfilebase+ present + '_qs850.nc'
+temp700_p = outfileloc + outfilebase+ present + '_temp700.nc'
+tempsurf_p = outfileloc + outfilebase+ present + '_tempsurf.nc'
+tempsum_p = outfileloc + outfilebase+ present + '_tempsum.nc'
+z700_p = outfileloc + outfilebase+ present + '_z700.nc'
+lcl_p = outfileloc + outfilebase+ present + '_lcl.nc'
 
-qs850_e = filebase + eight+'/'+outfilebase+'_qs850.nc'
-temp700_e = filebase + eight+'/'+outfilebase+'_temp700.nc'
-tempsurf_e = filebase + eight+'/'+outfilebase+'_tempsurf.nc'
-tempsum_e = filebase + eight+'/'+outfilebase+'_tempsum.nc'
-z700_e = filebase + eight+'/'+outfilebase+'_z700.nc'
 
-lcl_e = filebase + eight+'/'+outfilebase+'_lcl.nc'
+qs850_e = outfileloc + outfilebase+ eight + '_qs850.nc'
+temp700_e = outfileloc + outfilebase+ eight + '_temp700.nc'
+tempsurf_e = outfileloc + outfilebase+ eight + '_tempsurf.nc'
+tempsum_e = outfileloc + outfilebase+ eight + '_tempsum.nc'
+z700_e = outfileloc + outfilebase+ eight + '_z700.nc'
 
+lcl_e = outfileloc + outfilebase+ eight + '_lcl.nc'
+
+# set up the arrays
 lcl = []
 z700 = []
 lts = []
@@ -318,9 +371,6 @@ if os.path.isfile(lcl_p):
 	ds.close() #close the file
 
 
-
-
-
 #GET z700 eight
 if os.path.isfile(z700_e):
 	# open the file and get out the variable
@@ -336,10 +386,8 @@ if os.path.isfile(z700_p):
 	ds.close() #close the file
 
 
-
-
 #GET lts eight
-dsloc = filebase + eight+'/'+lts_outfilebase+'sub.nc'
+dsloc = outfileloc + lts_outfilebase+ eight +'_lts.nc'
 if os.path.isfile(dsloc):
 
 	# open the file and get out the variable
@@ -348,15 +396,13 @@ if os.path.isfile(dsloc):
 	ds.close() #close the file
 
 #GET lts Present
-dsloc = filebase + present+'/'+lts_outfilebase+'sub.nc'
+dsloc = outfileloc + lts_outfilebase+ present +'_lts.nc'
 if os.path.isfile(dsloc):
 
 	# open the file and get out the variable
 	ds = netCDF4.Dataset(dsloc)
 	lts_pres = ds.variables['lts'][:]
 	ds.close() #close the file
-
-
 
 
 #GET qs850 eight
@@ -373,9 +419,6 @@ if os.path.isfile(qs850_p):
 	ds = netCDF4.Dataset(qs850_p)
 	qs850_pres = ds.variables['smr'][:]
 	ds.close() #close the file	
-
-
-
 
 
 #GET tempsum eight
@@ -412,11 +455,9 @@ eis_diff = eis_e - eis_present
 
 
 
-
-
-
-
-# Plot PREC Present  **************************
+# ----------------------------
+# Plot Precip
+#-----------------------------
 ax = fig.add_subplot(climabsgrid[a])
 a=a+1
 
@@ -424,6 +465,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -435,9 +480,9 @@ cs = m.pcolormesh(lon2d,lat2d,np.squeeze(prectotalpres), cmap='PuBuGn', latlon='
 cs.set_edgecolor("face")
 		
 # add letter annotation
-plt.text(-0.10, 1.0, climletters[n], fontsize=12, fontweight="bold", transform=ax.transAxes)
+plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.65, 1.05, climheadings[n], fontsize=12, transform=ax.transAxes)
+plt.text(0.65, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
 
 # Plot PREC Eight **************************** 
 ax = fig.add_subplot(climabsgrid[a])
@@ -447,6 +492,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[False ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -462,6 +511,7 @@ ax = fig.add_subplot(climabsgrid[a])
 a=a+1
 cb = plt.colorbar(cs, cax=ax)
 
+cb.ax.tick_params(labelsize=6) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -475,6 +525,10 @@ d=d+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -490,17 +544,17 @@ ax = fig.add_subplot(climdiffgrid[d])
 d=d+1
 cb = plt.colorbar(cs, cax=ax, label='K')
 
+cb.ax.tick_params(labelsize=6) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
 
 n = n+1
 
-# -----------------------------
 
-
-
-# Plot OMEGA Present  **************************
+# ----------------------------
+# Plot OMEGA
+#-----------------------------
 ax = fig.add_subplot(climabsgrid[a])
 a=a+1
 
@@ -508,6 +562,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -519,9 +577,9 @@ cs = m.pcolormesh(lon2d,lat2d,np.squeeze(pres_omega), cmap='RdGy', latlon='True'
 cs.set_edgecolor("face")
 		
 # add letter annotation
-plt.text(-0.10, 1.0, climletters[n], fontsize=12, fontweight="bold", transform=ax.transAxes)
+plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.65, 1.05, climheadings[n], fontsize=12, transform=ax.transAxes)
+plt.text(0.65, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
 
 
 
@@ -533,6 +591,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[False ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -548,6 +610,7 @@ ax = fig.add_subplot(climabsgrid[a])
 a=a+1
 cb = plt.colorbar(cs, cax=ax)
 
+cb.ax.tick_params(labelsize=6) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -561,6 +624,10 @@ d=d+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -576,17 +643,19 @@ ax = fig.add_subplot(climdiffgrid[d])
 d=d+1
 cb = plt.colorbar(cs, cax=ax, label='hPa/s')
 
+cb.ax.tick_params(labelsize=6) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
 
 n = n+1
 
-# -----------------------------
 
 
 
-# Plot LTS Present  **************************
+# ----------------------------
+# Plot LTS
+#-----------------------------
 ax = fig.add_subplot(climabsgrid[a])
 a=a+1
 
@@ -594,6 +663,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -605,9 +678,9 @@ cs = m.pcolormesh(lon2d,lat2d,np.squeeze(lts_pres), cmap='PiYG_r', latlon='True'
 cs.set_edgecolor("face")
 		
 # add letter annotation
-plt.text(-0.10, 1.0, climletters[n], fontsize=12, fontweight="bold", transform=ax.transAxes)
+plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.65, 1.05, climheadings[n], fontsize=12, transform=ax.transAxes)
+plt.text(0.65, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
 
 # Plot LTS Eight **************************** 
 ax = fig.add_subplot(climabsgrid[a])
@@ -617,6 +690,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[False ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -632,6 +709,7 @@ ax = fig.add_subplot(climabsgrid[a])
 a=a+1
 cb = plt.colorbar(cs, cax=ax)
 
+cb.ax.tick_params(labelsize=6) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -645,6 +723,10 @@ d=d+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -660,15 +742,18 @@ ax = fig.add_subplot(climdiffgrid[d])
 d=d+1
 cb = plt.colorbar(cs, cax=ax, label='K')
 
+cb.ax.tick_params(labelsize=6) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
 
 n = n+1
 
-# -----------------------------
 
-# Plot EIS Present  **************************
+
+# ----------------------------
+# PLOT EIS
+#-----------------------------
 ax = fig.add_subplot(climabsgrid[a])
 a=a+1
 
@@ -676,6 +761,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -687,9 +776,9 @@ cs = m.pcolormesh(lon2d,lat2d,np.squeeze(eis_present), cmap='PiYG_r', latlon='Tr
 cs.set_edgecolor("face")
 		
 # add letter annotation
-plt.text(-0.10, 1.0, climletters[n], fontsize=12, fontweight="bold", transform=ax.transAxes)
+plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.65, 1.05, climheadings[n], fontsize=12, transform=ax.transAxes)
+plt.text(0.65, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
 
 # Plot EIS Eight **************************** 
 ax = fig.add_subplot(climabsgrid[a])
@@ -699,6 +788,10 @@ a=a+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[False ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -714,6 +807,7 @@ ax = fig.add_subplot(climabsgrid[a])
 a=a+1
 cb = plt.colorbar(cs, cax=ax)
 
+cb.ax.tick_params(labelsize=6) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -727,6 +821,10 @@ d=d+1
 m = Basemap(lat_0=0,lon_0=0, ax=ax)
 m.drawcoastlines()
 m.drawcountries()
+parallels = [-45, 0, 45]
+meridians = [-90., 0., 90.]
+m.drawparallels(parallels, labels=[True ,False,False, False], fontsize=6)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -742,15 +840,15 @@ ax = fig.add_subplot(climdiffgrid[d])
 d=d+1
 cb = plt.colorbar(cs, cax=ax, label='K')
 
+cb.ax.tick_params(labelsize=6) 
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
 
-
-
 # -----------------------------
+
 
 plt.show()
 
-fig.savefig("figure2CAM5.pdf", bbox_inches='tight')
+fig.savefig("ED_figure3.pdf", bbox_inches='tight')
 

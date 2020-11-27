@@ -16,12 +16,13 @@ import netCDF4
 #-----------------------------------------------------------------------------------------#
 # This file contains functions to process the model output for plotting in the figures
 # accompanying Goldblatt et al 2020. Most of these functions use the Climate Data Operators
-# (CDO) to time average, zonal average, perform mass weighting, etc. is used to prepare the model output to be plotted on the maps in figure 2
+# (CDO) to time average, zonal average, perform mass weighting, etc. is used to prepare the 
+# model output to be plotted on the maps in figure 2
 #-----------------------------------------------------------------------------------------#
 
 # this sets which cases to process. For speed to recreate the figures from the paper, by default this just
 # uses the S/S0 = 1.0 and S/S0 = 0.8. If you would like to process results from all cases uncomment the 
-# second set of lines
+# second set of lines but note that this will increase the processing time dramatically
 
 cases_cam4 = {'08','10'}
 cases_cam5 = {'09','10'}
@@ -32,7 +33,7 @@ cases_cam5 = {'09','10'}
 #-----------------------------------------------------------------------------------------#
 # This function is used to prepare the model output to be plotted on the maps in figure 2
 #-----------------------------------------------------------------------------------------#
-def map_annual_average(filebase, outloc, cam_version):
+def map_annual_average(filebase, outloc, cam_version, fields):
 	# This function calculates the annual average for all variables we're mapping in figs 2 and 4 that aren't on a pressure level
 
 	# check whether we're processessing CAM4 or CAM5
@@ -55,9 +56,6 @@ def map_annual_average(filebase, outloc, cam_version):
 	else:
 		print('must supply a supported CAM version - cam4 or cam5')
 
-
-	# the fields we want to average for our plots  - these must not depend on pressure level
-	fields = 'CLDHGH,CLDLOW,LHFLX,LWCF,PRECT,SHFLX,SWCF,TS'
 
 	# average the fields for each case
 	for c in casenames:
@@ -115,6 +113,51 @@ def map_vert_velocity(filebase, outloc, cam_version):
 				os.system(syscall)
 
 
+
+#-----------------------------------------------------------------------------------------#
+# This function is used to prepare the model output to be plotted on the maps in figure 4
+# It is essentially performing the same function as map_annual_average except that total 
+# water path is calculated for low and high clouds. This function outputs two netCDF files,
+# one for the high waterpath, one for the low waterpath.
+#-----------------------------------------------------------------------------------------#
+def map_total_waterpath(filebase, outloc, cam_version):
+	# check whether we're processessing CAM4 or CAM5
+	if cam_version == 'cam4':
+		# the processed filenames
+		outfilebase_high = outloc + 'c4_map_wp_high'	
+		outfilebase_low = outloc + 'c4_map_wp_low'	
+		# the CAM4 cases
+		casenames = cases_cam4
+		# for CAM4 look at years 21-40
+		selyear = '-selyear,21/40'	
+
+	else:
+		print('this function is only supported for cam4')
+
+	for c in casenames:
+		outfile_high = outfilebase_high +'_'+ c +'.nc'
+		outfile_low = outfilebase_low +'_'+ c +'.nc'
+	
+		# check directly if the file exists
+		if not os.path.isfile(outfile_high):
+			if os.path.isdir(filebase):
+				infile = filebase + cam_version + '_' + c +'.nc'
+			
+				syscall_high = r"//usr//bin//cdo -vertsum -timmean -sellevidx,1/17 " + selyear + " -select,name=ICLDTWP " +infile+ " " + outfile_high
+				print(syscall_high)
+				os.system(syscall_high)
+
+
+		# check directly if the file exists
+		if not os.path.isfile(outfile_low):
+			if os.path.isdir(filebase):
+				infile = filebase + cam_version + '_' + c +'.nc'
+
+				syscall_low = r"//usr//bin//cdo -vertsum -timmean -sellevidx,21/26 " + selyear + " -select,name=ICLDTWP " +infile+ " " + outfile_low
+				print(syscall_low)
+				os.system(syscall_low)
+
+
 #-----------------------------------------------------------------------------------------#
 # This function is used to calculate Lower Tropospheric Stability (LTS) to be plotted on the 
 # maps in figure 2. LTS is the difference in potential temperature between the suface and 
@@ -127,12 +170,14 @@ def prep_lts(filebase, outloc, cam_version):
 		casenames = cases_cam4
 
 		selyear = '-selyear,21/40'	
+		plev = "696.79629"
 	
 	elif cam_version == 'cam5':
 		outfilebase = outloc + 'c5_lts_map'
 		casenames = cases_cam5
 
 		selyear = '-selyear,31/60'	
+		plev = "691.389430314302"
 
 	else:
 		print('must supply a supported CAM version - cam4 or cam5')
@@ -152,13 +197,13 @@ def prep_lts(filebase, outloc, cam_version):
 
 				if not os.path.isfile(T700):
 					# calc T at 700 hPa
-					syscall = r"//usr//bin//cdo select,name=T -sellevel,696.79629 "+infile+ " " +T700
+					syscall = r"//usr//bin//cdo select,name=T -sellevel," + plev + " " +infile+ " " +T700
 					print(syscall)
 					os.system(syscall)
 
 				if not os.path.isfile(outfile700):
 					# calc potential temp at 700hPa
-					syscall = r"//usr//bin//cdo timmean " + selyear + " -select,name=lts -expr,\'lts=(T*(1000/696.79629)^0.286)\'  "+T700+" "+outfile700
+					syscall = r"//usr//bin//cdo timmean " + selyear + " -select,name=lts -expr,\'lts=(T*(1000/" + plev + ")^0.286)\'  "+T700+" "+outfile700
 					print(syscall)
 					os.system(syscall)
 
@@ -310,7 +355,7 @@ def wetbulb_potentialtemp(filebase, outloc, cam_version):
 	if cam_version == 'cam4':
 		# the processed filename 
 		outfilebase =  outloc + 'c4_wetbulb'	
-		zon_outfile =  outloc + 'c5_zonal_average'
+		zon_outfile =  outloc + 'c4_zonal_average'
 		# the CAM4 cases
 		casenames = cases_cam4
 		# for CAM4 look at years 21-40
@@ -416,6 +461,48 @@ def wetbulb_potentialtemp(filebase, outloc, cam_version):
 def pseudoadiabatig():
 	pass
     	
-		
+
+#-----------------------------------------------------------------------------------------#
+# This function is used to prepare the model output to be plotted on the maps in figure 5
+#-----------------------------------------------------------------------------------------#
+def cloud_forcing_all(filebase, outloc, fields, cam_version):
+
+	cases_cam4 = {'07', '0725', '075', '0775','08', '0825', '085','0875','09', '0925','095', '0975', '10', '1025', '105','1075','11'}
+	cases_cam5 = {'09', '0925','095', '0975', '10', '1025', '105'}
 	
-					
+	# check whether we're processessing CAM4 or CAM5
+	if cam_version == 'cam4':
+		# the processed filename 
+		outfilebase =  outloc + 'c4_cloudforcing'	
+
+		# the CAM4 cases
+		casenames = cases_cam4
+		# for CAM4 look at years 21-40
+		selyear = '-selyear,21/40'	
+
+	elif cam_version == 'cam5':
+		# the processed filename 
+		outfilebase =  outloc + 'c5_cloudforcing'	
+
+		# the CAM5 cases
+		casenames = cases_cam5
+		# for CAM5 look at years 31-60
+		selyear = '-selyear,31/60'	
+
+	else:
+		print('must supply a supported CAM version - cam4 or cam5')
+				
+
+	# average the fields for each case
+	for c in casenames:
+		outfile = outfilebase +'_'+ c +'.nc'
+
+		# check directly if the input file exists
+		if os.path.isdir(filebase):
+			# only run if the output file does not exist
+			if not os.path.isfile(outfile):
+				infile = filebase + cam_version + '_' + c +'.nc'
+
+				syscall = r"//usr//bin//cdo -timmean -yearmean " + selyear + " -select,name="+fields+" "+infile+" "+outfile
+				print(syscall)
+				os.system(syscall)

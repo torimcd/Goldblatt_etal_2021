@@ -26,21 +26,21 @@ import processing_functions as pf
 
 download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
 
-filebase = download_path + 'FYSP_clouds_archive/CAM4/'
+filebase = download_path + 'FYSP_clouds_archive/CAM5/'
 outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
 
 # ------------------------------------
 
 fields = 'LWCF,SWCF'
-pf.cloud_forcing_all(filebase, outfileloc, fields, 'cam4')
+pf.cloud_forcing_all(filebase, outfileloc, fields, 'cam5')
 
 
-outfilebase = 'c4_cloudforcing'
+outfilebase = 'c5_cloudforcing'
 
 outer_grid = gridspec.GridSpec(2, 1, wspace=0.1, hspace=0.1)
 
 #create plot
-fig = plt.figure(figsize=(8.5, 8.75))
+fig = plt.figure(figsize=(8.5, 9))
 i=0
 n=0
 l=0
@@ -49,7 +49,8 @@ swcf = 'SWCF'
 lwcf = 'LWCF'
 
 present = '_10'
-casenames = ['_11','_105','_10','_095','_09','_085','_08','_075','_07' ]
+casenames = ['_105','_1025','_10','_0975','_095','_0925','_09' ]
+
 while i<2:
 	inner_grid = gridspec.GridSpecFromSubplotSpec(3, 3, subplot_spec=outer_grid[i], wspace=0.0, hspace=0.3)	
 	if i==0:
@@ -61,13 +62,13 @@ while i<2:
 		n=0
 		l=1
 		
+
 	for y in casenames:
 		CASENAME = casenames[n]
 
 		ax = fig.add_subplot(inner_grid[n])		
 		
 		n=n+1
-
 	
 		#plot the data
 		presentcase = outfileloc + outfilebase + present +'.nc'
@@ -82,6 +83,7 @@ while i<2:
 		cfld = ds.variables[field][:]
 		lats = ds.variables['lat'][:]
 		lons = ds.variables['lon'][:]
+
 	
 		# setup the map
 		m = Basemap(lat_0=0,lon_0=0,ax=ax)
@@ -118,7 +120,6 @@ while i<2:
 	
 		ax.set_title(CASENAME[1]+'.'+CASENAME[-1], fontsize=10)
 	i=i+1
-
 	
 # Add Colorbar
 fig.subplots_adjust(right=0.8)
@@ -131,5 +132,5 @@ cb.update_ticks()
 
 plt.show()
 
-fig.savefig("figure5.pdf", bbox_inches='tight')
+fig.savefig("ED_figure6.pdf", bbox_inches='tight')
 
