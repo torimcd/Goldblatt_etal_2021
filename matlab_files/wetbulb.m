@@ -261,7 +261,7 @@ ncid = netcdf.create([wbpt_newfile],'NC_WRITE');
 
 % Define the dimensions
 dimidlat = netcdf.defDim(ncid,'latitude',96);
-dimidlon = netcdf.defDim(ncid,'lev',26);
+dimidlon = netcdf.defDim(ncid,'lev',30);
 
 % Define IDs for the dimension variables (pressure,time,latitude,...)
 latitude_ID=netcdf.defVar(ncid,'latitude','double',[dimidlat]);
@@ -351,7 +351,7 @@ ncid = netcdf.create([wbpt_newfile],'NC_WRITE');
 
 % Define the dimensions
 dimidlat = netcdf.defDim(ncid,'latitude',96);
-dimidlon = netcdf.defDim(ncid,'lev',26);
+dimidlon = netcdf.defDim(ncid,'lev',30);
 
 % Define IDs for the dimension variables (pressure,time,latitude,...)
 latitude_ID=netcdf.defVar(ncid,'latitude','double',[dimidlat]);
