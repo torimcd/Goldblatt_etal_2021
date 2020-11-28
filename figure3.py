@@ -33,7 +33,7 @@ outfileloc = download_path + 'temp_data/' # this is the location to save the pro
 # ------------------------------------
 
 # process the fields we're plotting
-pf.zonal_average(filebase, outfileloc, 'cam4') # averages fields zonally over years 31-60, retaining location so can be plotted in map view
+pf.zonal_average(filebase, outfileloc, 'cam4', numfields='all') # averages fields zonally over years 31-60, retaining location so can be plotted in map view
 pf.wetbulb_potentialtemp(filebase, outfileloc, 'cam4') # the same as above but for wetbulb potential temperature selected at 700 hPa
 
 
@@ -62,7 +62,8 @@ eight = '_08'
 
 casenames = {'11': '#fcae91','1075': '#fb6a4a','105': '#cb181d','1025': '#dd3497','10': 'black','0975':'#8d2689','095': '#9366af','0925': '#9061ee','09': '#4c4cff','0875': '#0073e6','085': '#2c7fb8','0825': '#41b6c4','08': '#97dde5','0775':'#9fbfc8','075': '#aec3cb','0725': '#c7cccd','07': '#90999c'}
 
-#create plot
+#create plot. Replace with below to make bigger
+# fig = plt.figure(figsize=(7.08661, 4.7244067))
 fig = plt.figure(figsize=(18, 12))
 
 # container
@@ -82,11 +83,11 @@ n=0
 ax1 = fig.add_subplot(midgrid_top[0])
 ax2 = fig.add_subplot(midgrid_top[1])
 
-present='_10'
+present='10'
 
 # Top row - zonal surface temp and diff -----------------------------------------------
 for CASENAME in casenames.keys():
-	dsloc_a = outfileloc+filenames[0]+'_'+CASENAME+'.nc'
+	dsloc_a = outfileloc+filenames[0]+CASENAME+'.nc'
 	if os.path.isfile(dsloc_a):
 
 		# open the merged file and get out the variables
@@ -100,7 +101,7 @@ for CASENAME in casenames.keys():
 	if os.path.isfile(dsloc_p):
 
 		# open the merged file and get out the variables
-		ds = netCDF4.Dataset(dsloc_d)
+		ds = netCDF4.Dataset(dsloc_p)
 		ts_p = ds.variables['TS'][:]
 		lat = ds.variables['lat'][:]
 		ds.close() #close the file
@@ -121,20 +122,15 @@ for CASENAME in casenames.keys():
 
 
 # axis labels
-ax1.set_ylabel(r'$\mathsf{Temperature}$' +r'$\mathsf{(K)}$', fontsize=6)
+ax1.set_ylabel(r'$\mathsf{Temperature}$' +r'$\mathsf{(K)}$', fontsize=12)
 ax1.set_xlabel(r'$\mathsf{Latitude}$', fontsize=12)
-ax2.set_ylabel(r'$\mathsf{Difference}$' + '\n' +r'$\mathsf{(K)}$', fontsize=6)
+ax2.set_ylabel(r'$\mathsf{Difference}$' + '\n' +r'$\mathsf{(K)}$', fontsize=12)
 ax2.set_xlabel(r'$\mathsf{Latitude}$', fontsize=12)
 
-plt.text(-0.10, 1.0, letters[n], fontsize=6, fontweight="bold", transform=ax1.transAxes)
+plt.text(-0.10, 1.0, letters[n], fontsize=12, fontweight="bold", transform=ax1.transAxes)
 n=n+1
-plt.text(-0.10, 1.0, letters[n], fontsize=6, fontweight="bold", transform=ax2.transAxes)
+plt.text(-0.10, 1.0, letters[n], fontsize=12, fontweight="bold", transform=ax2.transAxes)
 n=n+1
-
-#sort legend
-handles, labels = ax1.get_legend_handles_labels()
-hl = sorted(zip(handles, labels), key=operator.itemgetter(1))
-handles2, labels2 = zip(*hl)
 
 
 # Bottom section ---------------------------------------------------------------------
@@ -152,8 +148,8 @@ v = 0
 # keep track of labels
 l = 0
 
-present = '_10'
-eight = '_08'
+present = '10'
+eight = '08'
 
 for p in fields:
 	f = filenames[row]
@@ -161,7 +157,7 @@ for p in fields:
 
 	# get out the data for the 1.0 S/So and 0.8 S/So
 	presentcase = outfileloc + f + present +'.nc'
-	eightcase = filebase + f + eight +'.nc'
+	eightcase = outfileloc + f + eight +'.nc'
 
 	#plot the data -> S/S0 = 1.0
 	ax = fig.add_subplot(absgrid[a])
@@ -204,7 +200,7 @@ for p in fields:
 			tlevs = range(vmins[v], vmaxs[v])
 
 		cnorm = colors.Normalize(vmins[v], vmaxs[v])
-		scalarMap = matplotlib.cm.ScalarMappable(norm=cnorm, cmap=cm)
+		scalarMap = mpl.cm.ScalarMappable(norm=cnorm, cmap=cm)
 		
 		# Create 2D lat/lon arrays for Basemap
 		pressure2d, lat2d = np.meshgrid(p, lat)
@@ -219,17 +215,17 @@ for p in fields:
 
 		# axis labels
 
-		ax.set_ylabel(labs[l], fontsize=6)
+		ax.set_ylabel(labs[l], fontsize=12)
 		l = l+1
 
 		ax.invert_yaxis()
 
 		if n < 5:
 			ax.set_xticklabels([])
-			ax.set_xlabel(labs[l], fontsize=6)
+			ax.set_xlabel(labs[l], fontsize=12)
 			l = l+1
 
-		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
+		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=12)
 
 
 		# This is the fix for the white lines between contour levels
@@ -237,7 +233,7 @@ for p in fields:
   		  i.set_edgecolor("face")
 		
 		# add letter annotation
-		plt.text(-0.15, 1.0, letters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
+		plt.text(-0.15, 1.0, letters[n], fontsize=12, fontweight="bold", transform=ax.transAxes)
 
 	#plot the data -> S/S0 = 0.8
 	ax = fig.add_subplot(absgrid[a])
@@ -297,7 +293,7 @@ for p in fields:
 		if n < 5:
 			ax.set_xticklabels([])
 
-		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
+		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=12)
 
 
 		# This is the fix for the white lines between contour levels
@@ -355,12 +351,12 @@ for p in fields:
 		ax.set_yticklabels([])
 
 
-		ax.set_ylabel(labs[l], fontsize=6)
+		ax.set_ylabel(labs[l], fontsize=12)
 		l = l+1
 
 		if n < 5:
 			ax.set_xticklabels([])
-			ax.set_xlabel(labs[l], fontsize=6)
+			ax.set_xlabel(labs[l], fontsize=12)
 			l = l+1
 
 		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=12)
@@ -374,7 +370,7 @@ for p in fields:
 		ax = fig.add_subplot(diffgrid[d])
 		d=d+1
 		cb = plt.colorbar(c, cax=ax)
-		cb.set_label(label=labs[l], size=6)
+		cb.set_label(label=labs[l], size=12)
 		l = l+1
 
 		tick_locator = ticker.MaxNLocator(nbins=3)

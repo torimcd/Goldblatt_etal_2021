@@ -300,8 +300,11 @@ def prep_eis(filebase, outloc, cam_version):
 #---------------------------------------------------------------------------------------------#
 # This function is used to prepare the model output to be plotted zonally averaged in figure 3
 #---------------------------------------------------------------------------------------------#
-def zonal_average(filebase, outloc, cam_version):
+def zonal_average(filebase, outloc, cam_version, numfields):
 	# This function calculates the annual average for all variables we're mapping in figs 2 and 4 that aren't on a pressure level
+	if numfields == 'all':
+		cases_cam4 = {'07','0725','075','0775', '08','0825','085','0875','09','0925','095','0975','10', '1025', '105', '1075','11'}
+		cases_cam5 = {'09','0925','095','0975','10', '1025', '105'}
 
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
@@ -349,14 +352,18 @@ def zonal_average(filebase, outloc, cam_version):
 #-------------------------------------------------------------------------#
 def wetbulb_potentialtemp(filebase, outloc, cam_version):
 
-	# Wet bulb uses zonally averaged T so run the that first if not done already
-	zonal_average(filebase, outloc, cam_version)
+	# prepare the variables to use in wet bulb calculation
+	wbpt_prep(filebase, outloc, cam_version)
 
+#--------------------------------------------------------------------------#
+# This function prepares the variables needed to calculate wet bulb potential
+# temperature for figure 3
+#-------------------------------------------------------------------------#
+def wbpt_prep(filebase, outloc, cam_version):
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
 		# the processed filename 
-		outfilebase =  outloc + 'c4_wetbulb'	
-		zon_outfile =  outloc + 'c4_zonal_average'
+		outfilebase = outloc + 'c4_wbpt_prep'	
 		# the CAM4 cases
 		casenames = cases_cam4
 		# for CAM4 look at years 21-40
@@ -364,8 +371,7 @@ def wetbulb_potentialtemp(filebase, outloc, cam_version):
 
 	elif cam_version == 'cam5':
 		# the processed filename 
-		outfilebase =  outloc + 'c5_wetbulb'
-		zon_outfile =  outloc + 'c5_zonal_average'
+		outfilebase = outloc + 'c5_wbpt_prep'
 		# the CAM5 cases
 		casenames = cases_cam5
 		# for CAM5 look at years 31-60
@@ -375,145 +381,21 @@ def wetbulb_potentialtemp(filebase, outloc, cam_version):
 		print('must supply a supported CAM version - cam4 or cam5')
 
 
-	# calc wet bulb potential temp for each case
+	# average the fields for each case
 	for c in casenames:
-		outfile = outfilebase +'_'+ c +'.nc' # the outfile for wet bulb
-		zonfile = zon_outfile +'_'+ c +'.nc' # the zonal averaged T file to read
+		outfile = outfilebase +'_'+ c +'.nc'
 
-		# initialize these here so we can use them to write out the dimensions
-		lat = []
-		lev = []
-		if os.path.isfile(zonfile):
+		# check directly if the input file exists
+		if os.path.isdir(filebase):
+			# only run if the output file does not exist
 			if not os.path.isfile(outfile):
-				# open the zonal file and get out the variables
-				ds = netCDF4.Dataset(zonfile)
-				T = ds.variables['T'][:]
-				lat = ds.variables['lat'][:]
-				lev = ds.variables['lev'][:]
-				ds.close() #close the file
+				infile = filebase + cam_version + '_' + c +'.nc'
 
-				# set constants
-				R = 287.1
-				cp = 1004
-				p0 = 1e5
-
-				# unit conversion
-				p = lev*100
-				pp = np.ones(np.size(lat))*np.transpose(p)
-
-				# calc potential temperature
-				sigma = T*(p0/p)**(R/cp)
-
-				# initialize
-				sigmaw = 999*np.ones(np.size(sigma))
-
-				# function we will integrate is
-				# dTdp = pseudoadiabatig(p,T,Rd,Md,cpd,condensablegas,condensedphase)
-				Rd = R
-				cpd = cp
-				Md = 0.02897
-				rtol = 1**(-6)
-
-				for i in sigmaw:
-					pspan = np.array(pp[ii], 1e5)
-					if pspan[0] == pspan[1]:
-						sigmaw[i] = T[i]
-					else:
-						To = T[o]
-						Tw = scipy.integrate.RK45(pseuedoadiabat(p, T, Rd, Md, cpd, 'h2o', 'l'), To, pspan, rtol=rtol)
-						sigmaw[i] = Tw[-1]
-		
-
-		# save the calculated wbpt to a new netcdf file like the other processing steps
-		try: ncfile.close()  # just to be safe, make sure dataset is not already open.
-		except: pass
-		ncfile = Dataset(outfile,mode='w',format='NETCDF4_CLASSIC') 
-
-		lat_dim = ncfile.createDimension('lat', 73)     # latitude axis
-		lev_dim = ncfile.createDimension('level', None) # unlimited axis (can be appended to).
-		
-		ncfile.title='WetBulb Potential Temperature'
+				syscall = r"//usr//bin//cdo -timmean "+ selyear + " -select,name=T "+ infile+" "+outfile
+				print(syscall)
+				os.system(syscall)
 
 
-		# Define two variables with the same names as dimensions,
-		# a conventional way to define "coordinate variables".
-		lat_var = ncfile.createVariable('lat', np.float32, ('lat',))
-		lat_var.units = 'degrees_north'
-		lat_var.long_name = 'latitude'
-
-		lev_var = ncfile.createVariable('lev', np.float64, ('lev',))
-		lev_var.units = 'hPa'
-		lev_var.long_name = 'pressure level'
-
-		# Define a 2D variable to hold the data
-		wbpt = ncfile.createVariable('sigmaw',np.float64,('lev','lat')) # note: unlimited dimension is leftmost
-		wbpt.units = 'K' # degrees Kelvin
-		wbpt.standard_name = 'wet_bulb_potential_temperature' # this is a CF standard name
-		
-		# write the values out
-		lat_var[:] = lat
-		lev_var[:] = lev
-		wbpt[:,:] = sigmaw
-
-		ncfile.close() # close the file when we're done writing it out
-
-
-#-----------------------------------------------------------------------------------------#
-# This function is called when calculating wet bulb potential temperature for Figure 3.
-# Pseudoadiabat for an ideal gas
-# Derived from eq 23 in sec 9 of Iribarne & Godson, 1981 (p181)
-# substituting eq24-25, simplifying denominator and setting as pseudoadiabatic following text
-# after eq 25.
-#-----------------------------------------------------------------------------------------#
-def pseudoadiabatig(p, T, Rd, Md, cpd, condensablegas, condensedphase):
-	if condensablegas == 'h2o':
-		Mc = 18.003e-3
-
-		# load data variables from .mat files
-		satvp_h2o = loadmat('satvp_h2o.mat')
-		L_h2o = loadmat('L_h2o.mat')
-		cpv_h2o = loadmat('cpv_h2o.mat')
-
-		Tcpv = cpv_h2o.get('Tcpv')
-		cpv = cpv_h2o.get('cpv')
-		Tsatl = satvp_h2o.get('Tsatl')
-		Tsati = satvp_h20.get('Tsati')
-		psatl = satvp_h2o.get('psatl')
-		psati = satvp_h2o.get('psati')
-		TLiv = L_h2o.get('TLiv')
-		Liv = L_h2o.get('Liv')
-
-		cpv1_func = scipy.interp1d(Tcpv, log(cpv), 'linear')
-		cpv1 = exp(cpv1func(T))
-
-		if condensedphase == 'l':
-			es_func = scipy.interp1d(Tsatl, log(psatl), 'linear')
-			es = exp(es_func(T)) 	# saturation vapor pressure
-
-			L_func = scipy.interp1d(TLiv, Liv, 'linear', fill_value='extrapolate')
-			L = L_func(T)
-
-		elif condensedphase == 'i':
-			es_func = scipy.interp1d(Tsati, log(psati), 'linear')
-			es = exp(es_func(T)) 	# saturation vapor pressure
-
-			L_func = scipy.interp1d(TLiv, Liv, 'linear', fill_value='extrapolate')
-			L = L_func(T)
-		else:
-			print("Error while calculating pseudoadiabat for wet bulb potential temperature: Condensed phase should be either l or i")
-			
-
-	else:
-		print('Error while calculating psuedoadiabt for wet bulb potential temperature: Condensable gas not recognized')
-		
-	epsilon = Mc/Md # mass ratio, subscript c for condensable
-
-	if p==es:
-		print('Error while calculating pseudoadiabat for wet bulb potential temperature: input p and calculated es are identical')
-	
-	rw = epsilon*es/(p-es)
-
-	dTdp = ((T*Rd + L*rw)/(p-es))/(cpd + rw*cpv1 + L**2*rw*(epsilon+rw)/Rd*T**2)
 
 
 #-----------------------------------------------------------------------------------------#

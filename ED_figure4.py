@@ -1,21 +1,41 @@
 #!/usr/bin/env python3
+"""
+Author: Victoria McDonald
+email: vmcd@atmos.washington.edu
+website: http://torimcd.github.com
+license: BSD
 
-import matplotlib
-matplotlib.use('Agg')
+"""
+import matplotlib as mpl
+mpl.use("Agg")
 
 import os
 import sys
 import numpy as np
 import netCDF4
 import operator
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.gridspec as gridspec
 from matplotlib import ticker
 from mpl_toolkits.basemap import Basemap
+import processing_functions as pf
 
-#run = 'Final'
+# ------------------------------------------------------------------------
+# change this section to match where you downloaded the model output files 
+# ------------------------------------------------------------------------
+
+download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
+
+filebase = download_path + 'FYSP_clouds_archive/CAM5/'
+outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
+
+# ------------------------------------
+
+# process the fields we're plotting
+pf.zonal_average(filebase, outfileloc, 'cam5', numfields='all') # averages fields zonally over years 31-60, retaining location so can be plotted in map view
+pf.wetbulb_potentialtemp(filebase, outfileloc, 'cam5') # the same as above but for wetbulb potential temperature selected at 700 hPa
+
 
 
 # field variables
@@ -27,24 +47,23 @@ fields= ['T',
 cmaps=['cool', 'cool','GnBu', 'RdGy']
 cmaps_d=['RdBu_r','RdBu_r','BrBG','RdGy']
 
-filenames = ['potentialtemp_pressure_',
-	'wbpt_',
-	'zonalhumidity_pressure_',
-	'zonalvertvelc5_']
+filenames = ['c5_zonal_average_',
+	'c5_wbpt_',
+	'c5_zonal_average_',
+	'c5_zonal_average_']
 
 letters = ['a', 'b', 'c', 'd', 'e', 'f']
 
 vmins = [200, -20, 240, -6, 0, -20,-5, -1.8] 
 vmaxs = [602, 22, 320, 7, 20, 21, 6, 1.8]
 
-filebase = '/nazko/home/shared/vmcd/modelOutput/gcmexpt/CAM5/'
+present = '_10'
+eight = '_09'
 
-present = '1.0'
-eight = '0.9'
+casenames = {'09': '#97dde5','0925': '#2c7fb8','095': '#4c4cff','0975':'#9366af','10': 'black','1025': '#cb181d','105': '#fcae91',}
 
-casenames = {'0.9': '#97dde5','0.925': '#2c7fb8','0.95': '#4c4cff','0.975':'#9366af','1.0': 'black','1.025': '#cb181d','1.05': '#fcae91',}
-
-#create plot
+#create plot. Replace with below to make bigger
+# fig = plt.figure(figsize=(7.08661, 4.7244067))
 fig = plt.figure(figsize=(18, 12))
 
 # container
@@ -63,11 +82,11 @@ n=0
 
 ax1 = fig.add_subplot(midgrid_top[0])
 ax2 = fig.add_subplot(midgrid_top[1])
-#ax3 = fig.add_subplot(midgrid_top[1,:])
+
 
 # Top row - zonal surface temp and diff -----------------------------------------------
 for CASENAME in casenames.keys():
-	dsloc_a = filebase+CASENAME+'/tszonmean.nc'
+	dsloc_a = outfileloc+filenames[0]+CASENAME+'.nc'
 
 	if os.path.isfile(dsloc_a):
 
@@ -78,19 +97,22 @@ for CASENAME in casenames.keys():
 		ds.close() #close the file
 		ts_a = ts_a.flatten()
 
-	dsloc_d = filebase+CASENAME+'/tszonmean_diff.nc'
-	if os.path.isfile(dsloc_d):
+	dsloc_p = outfileloc+filenames[0]+present+'.nc'
+	if os.path.isfile(dsloc_p):
 
 		# open the merged file and get out the variables
-		ds = netCDF4.Dataset(dsloc_d)
-		ts_d = ds.variables['TS'][:]
+		ds = netCDF4.Dataset(dsloc_p)
+		ts_p = ds.variables['TS'][:]
 		lat = ds.variables['lat'][:]
 		ds.close() #close the file
-		ts_d = ts_d.flatten()
+		ts_p = ts_p.flatten()
+		
+	# calculate the difference
+	ts_d = ts_a - ts_p
 
 	#plot the data
-	ax1.plot(lat, ts_a, color=casenames[CASENAME], linewidth=1.5, label=CASENAME)
-	ax2.plot(lat, ts_d, color=casenames[CASENAME], linewidth=1.5, label=CASENAME)
+	ax1.plot(lat, ts_a, color=casenames[CASENAME], linewidth=1.5, rasterized=True)
+	ax2.plot(lat, ts_d, color=casenames[CASENAME], linewidth=1.5, rasterized=True)
 
 	# fix axis tick spacing
 	ax1.xaxis.set_major_locator(ticker.MultipleLocator(30))
@@ -110,17 +132,6 @@ n=n+1
 plt.text(-0.10, 1.0, letters[n], fontsize=12, fontweight="bold", transform=ax2.transAxes)
 n=n+1
 
-#sort legend
-handles, labels = ax1.get_legend_handles_labels()
-hl = sorted(zip(handles, labels), key=operator.itemgetter(1))
-handles2, labels2 = zip(*hl)
-
-# Display the legend below the plot
-#ax3.legend(handles2, labels2, bbox_to_anchor=(0, 0, 1, 1), loc=10, ncol=9, mode="expand", borderaxespad=0., frameon=False, fontsize=10)
-#ax3.set_xticklabels([])
-#ax3.set_yticklabels([])
-#ax3.set_xticks([])
-#ax3.set_yticks([])
 
 # Bottom section ---------------------------------------------------------------------
 
@@ -136,22 +147,24 @@ d = 0
 v = 0
 # keep track of labels
 l = 0
+
+present = '10'
+eight = '09'
+
 for p in fields:
 	f = filenames[row]
 	field = fields[row]
-	presentcase = filebase + present+'/'+f+'.nc'
-	eightcase = filebase + eight +'/'+f+'.nc'
 
-	if field == 'OMEGA':
-		presentcase = '/home/vmcd/projects/output/zonalvertvel_1.0.nc'
-		eightcase = '/home/vmcd/projects/output/zonalvertvel_0.9.nc'
+	# get out the data for the 1.0 S/So and 0.9 S/So
+	presentcase = outfileloc + f + present +'.nc'
+	eightcase = outfileloc + f + eight +'.nc'
 
 	
 	#plot the data - PRESENT
 	ax = fig.add_subplot(absgrid[a])
 	a=a+1
 
-	print(presentcase)
+
 	if os.path.isfile(presentcase):
 
 		ds = netCDF4.Dataset(presentcase)
@@ -200,7 +213,7 @@ for p in fields:
 
 
 		#plot the data
-		c=plt.contourf(lat, p, np.squeeze(op), tlevs, cmap=cm)
+		c=plt.contourf(lat, p, np.squeeze(op), tlevs, cmap=cm, rasterized=True)
 		ax.xaxis.set_major_locator(ticker.MultipleLocator(30))
 
 		# axis labels
@@ -225,7 +238,7 @@ for p in fields:
 		# add letter annotation
 		plt.text(-0.15, 1.0, letters[n], fontsize=12, fontweight="bold", transform=ax.transAxes)
 
-	#plot the data - EIGHT
+	#plot the data -> S/S0 = 0.9
 	ax = fig.add_subplot(absgrid[a])
 	a=a+1
 
@@ -272,7 +285,7 @@ for p in fields:
 
 
 		#plot the data
-		c=plt.contourf(lat, p, np.squeeze(o8), tlevs, cmap=cm)
+		c=plt.contourf(lat, p, np.squeeze(o8), tlevs, cmap=cm, rasterized=True)
 
 		# axis labels
 		ax.xaxis.set_major_locator(ticker.MultipleLocator(30))
@@ -333,7 +346,7 @@ for p in fields:
 			 diff = np.squeeze(o8) - np.squeeze(op)
 
 		#plot the data
-		c=plt.contourf(lat, p, diff, tlevs, cmap=cm)
+		c=plt.contourf(lat, p, diff, tlevs, cmap=cm, rasterized=True)
 
 		# axis labels
 		ax.xaxis.set_major_locator(ticker.MultipleLocator(30))
@@ -375,5 +388,5 @@ for p in fields:
 
 plt.show()
 
-fig.savefig("figure3_cam5.pdf", bbox_inches='tight')
+fig.savefig("ED_figure4.pdf", bbox_inches='tight')
 
