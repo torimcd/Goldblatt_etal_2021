@@ -15,7 +15,7 @@
 
 %% calculate for CAM4 S/So = 1.0
 % read in processed model output
-filepath = '../temp_data/c4_wbpt_prep_10.nc'
+filepath = '/home/vmcd/temp_data/c4_wbpt_prep_10.nc' % change to your system - note change other cases lower down in this file as well
 
 % check that the file exists
 if isfile(filepath)
@@ -110,7 +110,7 @@ end
 
 %% calculate for CAM4 S/So = 0.8
 % read in processed model output
-filepath = '../temp_data/c4_wbpt_prep_08.nc'
+filepath = '/home/vmcd/temp_data/c4_wbpt_prep_08.nc'
 
 % check that the file exists
 if isfile(filepath)
