@@ -1,4 +1,4 @@
-function a = wetbulb(filepath, outfileloc, cam_version)
+function a = wetbulb(filepath, outfileloc)
 
     % read in CAM output
     T = ncread(filepath,'T');
@@ -7,7 +7,7 @@ function a = wetbulb(filepath, outfileloc, cam_version)
     lev = ncread(filepath,'lev');
     time = ncread(filepath,'time');
 
-    % take the zonal mean
+    % take the mean
     Tmean = nanmean(T,1);
     Tmean = squeeze(Tmean);
 
@@ -55,15 +55,8 @@ function a = wetbulb(filepath, outfileloc, cam_version)
 
     % write potential temp as nc file
 
-    if strcmp(cam_version,'cam4')
-        wbpt_newfile = outfileloc + 'c4_wbpt_10.nc';
-    elseif strcmp(cam_version,'cam5')
-         wbpt_newfile = outfileloc + 'c5_wbpt_10.nc';
-    end
-        
-
     % Open the file
-    ncid = netcdf.create([wbpt_newfile],'NC_WRITE');
+    ncid = netcdf.create([outfileloc + '/wbpt_10.nc'],'NC_WRITE');
  
     % Define the dimensions
     dimidlat = netcdf.defDim(ncid,'latitude',96);
