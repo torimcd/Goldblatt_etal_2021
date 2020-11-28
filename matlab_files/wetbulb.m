@@ -15,8 +15,9 @@
 
 %% calculate for CAM4 S/So = 1.0
 % read in processed model output
-filepath = '/home/vmcd/temp_data/c4_wbpt_prep_10.nc'; % change to your system - note change other cases lower down in this file as well
-outfileloc = '/home/vmcd/temp_data/';
+outfileloc = '/home/vmcd/temp_data/'; % change to match your system
+filepath = strcat(outfileloc, 'c4_wbpt_prep_10.nc'); 
+
 T = ncread(filepath,'T');
 lat = ncread(filepath,'lat');
 lon = ncread(filepath,'lon');
@@ -70,7 +71,7 @@ clf
 
 
 % write potential temp as nc file
-wbpt_newfile = '/home/vmcd/temp_data/c4_wbpt_10.nc';
+wbpt_newfile = strcat(outfileloc+'c4_wbpt_10.nc');
 
 
 % Open the file
@@ -104,7 +105,7 @@ netcdf.close(ncid)
 
 %% calculate for CAM4 S/So = 0.8
 % read in processed model output
-filepath = '/home/vmcd/temp_data/c4_wbpt_prep_08.nc';
+filepath = strcat(outfileloc, 'c4_wbpt_prep_08.nc'); 
 
     
 T = ncread(filepath,'T');
@@ -160,7 +161,8 @@ clf
 
 
 % write potential temp as nc file
-wbpt_newfile = outfileloc + 'c4_wbpt_08.nc';
+
+wbpt_newfile = strcat(outfileloc+'c4_wbpt_08.nc');
 
 
 % Open the file
@@ -195,7 +197,7 @@ netcdf.close(ncid)
 
 %% calculate for CAM5 S/So = 1.0
 % read in processed model output
-filepath = '../temp_data/c5_wbpt_prep_10.nc'
+filepath = strcat(outfileloc, 'c5_wbpt_prep_10.nc'); 
 
     
 T = ncread(filepath,'T');
@@ -251,7 +253,7 @@ clf
 
 
 % write potential temp as nc file
-wbpt_newfile = outfileloc + 'c5_wbpt_10.nc';
+wbpt_newfile = strcat(outfileloc, 'c5_wbpt_10.nc'); 
 
 
 % Open the file
@@ -285,7 +287,7 @@ netcdf.close(ncid)
 
 %% calculate for CAM4 S/So = 0.9
 % read in processed model output
-filepath = '../temp_data/c5_wbpt_prep_09.nc'
+filepath = strcat(outfileloc, 'c4_wbpt_prep_09.nc'); 
 
     
 T = ncread(filepath,'T');
@@ -341,7 +343,7 @@ clf
 
 
 % write potential temp as nc file
-wbpt_newfile = outfileloc + 'c5_wbpt_09.nc';
+wbpt_newfile = strcat(outfileloc, 'c5_wbpt_prep_09.nc'); 
 
 
 % Open the file
