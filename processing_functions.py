@@ -12,6 +12,7 @@ import sys
 import scipy
 import numpy as np
 import netCDF4
+from scipy.io import loadmat
 
 #-----------------------------------------------------------------------------------------#
 # This file contains functions to process the model output for plotting in the figures
@@ -299,7 +300,7 @@ def prep_eis(filebase, outloc, cam_version):
 #---------------------------------------------------------------------------------------------#
 # This function is used to prepare the model output to be plotted zonally averaged in figure 3
 #---------------------------------------------------------------------------------------------#
-def zonal_average(filebase, outloc, am_version):
+def zonal_average(filebase, outloc, cam_version):
 	# This function calculates the annual average for all variables we're mapping in figs 2 and 4 that aren't on a pressure level
 
 	# check whether we're processessing CAM4 or CAM5
@@ -324,7 +325,7 @@ def zonal_average(filebase, outloc, am_version):
 
 
 	# the fields we want to average for our plots  - these must not depend on pressure level
-	fields = 'T, Q, OMEGA'
+	fields = 'TS,T,Q,OMEGA'
 
 	# average the fields for each case
 	for c in casenames:
@@ -385,26 +386,26 @@ def wetbulb_potentialtemp(filebase, outloc, cam_version):
 		if os.path.isfile(zonfile):
 			if not os.path.isfile(outfile):
 				# open the zonal file and get out the variables
-				ds = netCDF4.Dataset(dsloc_a)
+				ds = netCDF4.Dataset(zonfile)
 				T = ds.variables['T'][:]
 				lat = ds.variables['lat'][:]
 				lev = ds.variables['lev'][:]
 				ds.close() #close the file
 
 				# set constants
-				R= 287.1
+				R = 287.1
 				cp = 1004
 				p0 = 1e5
 
 				# unit conversion
 				p = lev*100
-				pp = np.ones(size(lat))*np.transpose(p)
+				pp = np.ones(np.size(lat))*np.transpose(p)
 
 				# calc potential temperature
 				sigma = T*(p0/p)**(R/cp)
 
 				# initialize
-				sigmaw = 999*np.ones(size(sigma))
+				sigmaw = 999*np.ones(np.size(sigma))
 
 				# function we will integrate is
 				# dTdp = pseudoadiabatig(p,T,Rd,Md,cpd,condensablegas,condensedphase)
@@ -423,7 +424,7 @@ def wetbulb_potentialtemp(filebase, outloc, cam_version):
 						sigmaw[i] = Tw[-1]
 		
 
-		# save the calculates wbpt to a new netcdf file like the other processing steps
+		# save the calculated wbpt to a new netcdf file like the other processing steps
 		try: ncfile.close()  # just to be safe, make sure dataset is not already open.
 		except: pass
 		ncfile = Dataset(outfile,mode='w',format='NETCDF4_CLASSIC') 
@@ -457,10 +458,63 @@ def wetbulb_potentialtemp(filebase, outloc, cam_version):
 		ncfile.close() # close the file when we're done writing it out
 
 
-# function to integrate for calculating wet bulb potential temperature
-def pseudoadiabatig():
-	pass
-    	
+#-----------------------------------------------------------------------------------------#
+# This function is called when calculating wet bulb potential temperature for Figure 3.
+# Pseudoadiabat for an ideal gas
+# Derived from eq 23 in sec 9 of Iribarne & Godson, 1981 (p181)
+# substituting eq24-25, simplifying denominator and setting as pseudoadiabatic following text
+# after eq 25.
+#-----------------------------------------------------------------------------------------#
+def pseudoadiabatig(p, T, Rd, Md, cpd, condensablegas, condensedphase):
+	if condensablegas == 'h2o':
+		Mc = 18.003e-3
+
+		# load data variables from .mat files
+		satvp_h2o = loadmat('satvp_h2o.mat')
+		L_h2o = loadmat('L_h2o.mat')
+		cpv_h2o = loadmat('cpv_h2o.mat')
+
+		Tcpv = cpv_h2o.get('Tcpv')
+		cpv = cpv_h2o.get('cpv')
+		Tsatl = satvp_h2o.get('Tsatl')
+		Tsati = satvp_h20.get('Tsati')
+		psatl = satvp_h2o.get('psatl')
+		psati = satvp_h2o.get('psati')
+		TLiv = L_h2o.get('TLiv')
+		Liv = L_h2o.get('Liv')
+
+		cpv1_func = scipy.interp1d(Tcpv, log(cpv), 'linear')
+		cpv1 = exp(cpv1func(T))
+
+		if condensedphase == 'l':
+			es_func = scipy.interp1d(Tsatl, log(psatl), 'linear')
+			es = exp(es_func(T)) 	# saturation vapor pressure
+
+			L_func = scipy.interp1d(TLiv, Liv, 'linear', fill_value='extrapolate')
+			L = L_func(T)
+
+		elif condensedphase == 'i':
+			es_func = scipy.interp1d(Tsati, log(psati), 'linear')
+			es = exp(es_func(T)) 	# saturation vapor pressure
+
+			L_func = scipy.interp1d(TLiv, Liv, 'linear', fill_value='extrapolate')
+			L = L_func(T)
+		else:
+			print("Error while calculating pseudoadiabat for wet bulb potential temperature: Condensed phase should be either l or i")
+			
+
+	else:
+		print('Error while calculating psuedoadiabt for wet bulb potential temperature: Condensable gas not recognized')
+		
+	epsilon = Mc/Md # mass ratio, subscript c for condensable
+
+	if p==es:
+		print('Error while calculating pseudoadiabat for wet bulb potential temperature: input p and calculated es are identical')
+	
+	rw = epsilon*es/(p-es)
+
+	dTdp = ((T*Rd + L*rw)/(p-es))/(cpd + rw*cpv1 + L**2*rw*(epsilon+rw)/Rd*T**2)
+
 
 #-----------------------------------------------------------------------------------------#
 # This function is used to prepare the model output to be plotted on the maps in figure 5
