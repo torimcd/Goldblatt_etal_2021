@@ -15,8 +15,8 @@
 
 %% calculate for CAM4 S/So = 1.0
 % read in processed model output
-filepath = '/home/vmcd/temp_data/c4_wbpt_prep_10.nc' % change to your system - note change other cases lower down in this file as well
-
+filepath = '/home/vmcd/temp_data/c4_wbpt_prep_10.nc'; % change to your system - note change other cases lower down in this file as well
+outfileloc = '/home/vmcd/temp_data/';
 T = ncread(filepath,'T');
 lat = ncread(filepath,'lat');
 lon = ncread(filepath,'lon');
@@ -104,7 +104,8 @@ netcdf.close(ncid)
 
 %% calculate for CAM4 S/So = 0.8
 % read in processed model output
-filepath = '/home/vmcd/temp_data/c4_wbpt_prep_08.nc'
+filepath = '/home/vmcd/temp_data/c4_wbpt_prep_08.nc';
+
     
 T = ncread(filepath,'T');
 lat = ncread(filepath,'lat');
