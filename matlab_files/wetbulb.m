@@ -287,7 +287,7 @@ netcdf.close(ncid)
 
 %% calculate for CAM4 S/So = 0.9
 % read in processed model output
-filepath = strcat(outfileloc, 'c4_wbpt_prep_09.nc'); 
+filepath = strcat(outfileloc, 'c5_wbpt_prep_09.nc'); 
 
     
 T = ncread(filepath,'T');
