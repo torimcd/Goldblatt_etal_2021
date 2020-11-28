@@ -343,7 +343,7 @@ clf
 
 
 % write potential temp as nc file
-wbpt_newfile = strcat(outfileloc, 'c5_wbpt_prep_09.nc'); 
+wbpt_newfile = strcat(outfileloc, 'c5_wbpt_09.nc'); 
 
 
 % Open the file
