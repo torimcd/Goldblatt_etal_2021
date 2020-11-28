@@ -71,7 +71,7 @@ clf
 
 
 % write potential temp as nc file
-wbpt_newfile = strcat(outfileloc+'c4_wbpt_10.nc');
+wbpt_newfile = strcat(outfileloc,'c4_wbpt_10.nc');
 
 
 % Open the file
@@ -162,7 +162,7 @@ clf
 
 % write potential temp as nc file
 
-wbpt_newfile = strcat(outfileloc+'c4_wbpt_08.nc');
+wbpt_newfile = strcat(outfileloc,'c4_wbpt_08.nc');
 
 
 % Open the file
