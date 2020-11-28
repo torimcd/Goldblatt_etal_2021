@@ -70,7 +70,7 @@ clf
 
 
 % write potential temp as nc file
-wbpt_newfile = outfileloc + 'c4_wbpt_10.nc';
+wbpt_newfile = '/home/vmcd/temp_data/c4_wbpt_10.nc';
 
 
 % Open the file
