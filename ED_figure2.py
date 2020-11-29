@@ -1,16 +1,43 @@
 #!/usr/bin/env python3
 
+"""
+Author: Victoria McDonald
+email: vmcd@atmos.washington.edu
+website: http://torimcd.github.com
+license: BSD
+
+"""
+import matplotlib
+matplotlib.use("Agg")
+
 import os
 import sys
 import numpy
 import netCDF4
 import operator
 import matplotlib
-#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import processing_functions as pf
 
-run = 'Final'
-years = '40'
+
+# ------------------------------------------------------------------------
+# change this section to match where you downloaded the model output files 
+# ------------------------------------------------------------------------
+
+download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
+
+filebase = download_path + 'FYSP_clouds_archive/CAM4/'
+filebase_c5 = download_path + 'FYSP_clouds_archive/CAM5/'
+outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
+
+# ------------------------------------------
+
+
+# field variables
+fields = 'co2vmr,LHFLX,SHFLX,CLDLOW,CLDHGH,LWCF,SWCF,FSDS,FSDSC,FSNS,FSNSC,FLDS,FLDSC,FLNS,FLNSC'
+
+pf.global_annual_average(filebase, outfileloc, fields, 'cam4')
+pf.global_annual_average(filebase_c5, outfileloc, fields, 'cam5')
 
 sw_dn = 'FSDS'
 sw_net = 'FSNS'
@@ -20,39 +47,20 @@ lw_net = 'FLNS'
 lhflx = 'LHFLX'
 shflx = 'SHFLX'
 
-filebase = '/home/vmcd/projects/modelOutput/gcmexpt/CAM4/'
-filebase_c5 = '/home/vmcd/projects/modelOutput/gcmexpt/CAM5/'
-outfilebase = 'srfenergy_'
 
-casenames = ['1.1','1.075','1.05','1.025','1.0','0.975','0.95','0.925','0.9','0.875','0.85','0.825','0.8','0.775','0.75','0.725','0.7']
-casenames_c5 = ['1.05','1.025','1.0', '0.975', '0.95','0.925','0.9']
+outfilebase_c4 = 'c4_global_average_'
+outfilebase_c5 = 'c5_global_average_'
+
+casenames = ['07','0725','075','0775','08','0825','085','0875','09','0925','095','0975','10','1025','105','1075','11']
+casenames_c5 = ['09','0925','095','0975','10','1025','105']
 
 sc_all = [1.1, 1.075, 1.05, 1.025, 1.0, 0.975, 0.95, 0.925, 0.9, 0.875, 0.85, 0.825, 0.8, 0.775, 0.75, 0.725, 0.7]
 sc_c5 = ['1.05','1.025','1.0', '0.975', '0.95','0.925','0.9']
 
-for CASENAME in casenames:
-	outfile_case = filebase+CASENAME+'/'+outfilebase+CASENAME+'.nc'
-	# check directly if the file exists
-	if not os.path.isfile(outfile_case):
-		if os.path.isdir(filebase+CASENAME):
-			infile = filebase + CASENAME+'/merged.nc'
-			# calc cldlow global average per month
-			syscall = 'cdo timmean -fldmean -selyear,21/40 -select,name=FSDS,FSDSC,FSNS,FSNSC,FLDS,FLDSC,FLNS,FLNSC,LHFLX,SHFLX '+infile+ ' ' +outfile_case
-			os.system(syscall)
-
-for CASENAME in casenames_c5:
-	outfile_case = filebase_c5+CASENAME+'/'+outfilebase+CASENAME+'.nc'
-	# check directly if the file exists
-	if not os.path.isfile(outfile_case):
-		if os.path.isdir(filebase_c5+CASENAME):
-			infile = filebase_c5 + CASENAME+'/merged.nc'
-			# calc cldlow global average per month
-			syscall = 'cdo timmean -fldmean -selyear,31/60 -select,name=FSDS,FSDSC,FSNS,FSNSC,FLDS,FLDSC,FLNS,FLNSC,LHFLX,SHFLX '+infile+ ' ' +outfile_case
-			os.system(syscall)
 
 
 #create plot
-fig = plt.figure()
+fig = plt.figure(figsize=(10, 11))
 ax = plt.subplot(211)
 
 sw_dn_plot = []
@@ -80,7 +88,7 @@ i=0
 #plot the data
 for CASE in casenames:
 	CASENAME = casenames[i]
-	dsloc = filebase+CASENAME+'/'+outfilebase+CASENAME+'.nc'
+	dsloc = outfileloc + outfilebase_c4 + CASENAME + '.nc'
 	if os.path.isfile(dsloc):
 		swd = []
 		swdc = []
@@ -124,7 +132,7 @@ for CASE in casenames:
 i=0
 for CASENAME in casenames_c5:
 	CASENAME = casenames_c5[i]
-	dsloc = filebase_c5+CASENAME+'/'+outfilebase+CASENAME+'.nc'
+	dsloc = outfileloc + outfilebase_c5 + CASENAME + '.nc'
 	if os.path.isfile(dsloc):
 		swd_c5 = []
 		swdc_c5 = []
@@ -196,15 +204,16 @@ hl = sorted(zip(handles, labels), key=operator.itemgetter(1))
 handles2, labels2 = zip(*hl)
 
 # Display the legend below the plot
-plt.legend(handles2, labels2, bbox_to_anchor=(0., -0.3, 1., .102), loc=3,ncol=3, mode="expand", borderaxespad=0.)
+plt.legend(handles2, labels2, bbox_to_anchor=(0., -0.3, 1., .102), loc=3,ncol=3, mode="expand", borderaxespad=0., prop={"size":10})
 
-plt.title('Global Average Surface Energy Budget', fontsize=16)
-plt.xlabel(r'$\mathsf{S/S_0}$', fontsize=16)
-plt.ylabel(r'$\mathsf{Flux}$' + ' ' +r'$\mathsf{(W/m^2)}$', fontsize=16)
+plt.title('Global Average Surface Energy Budget', fontsize=10)
+plt.xlabel(r'$\mathsf{S/S_0}$', fontsize=10)
+plt.ylabel(r'$\mathsf{Flux}$' + ' ' +r'$\mathsf{(W/m^2)}$', fontsize=10)
 plt.minorticks_on()
+ax.tick_params(labelsize=10) 
 plt.axis([0.675,1.125,0,400])
 plt.grid()
 plt.show()
 
-fig.savefig("srf_energy_budget.pdf", bbox_inches='tight')
+fig.savefig("ED_figure2.pdf", bbox_inches='tight')
 

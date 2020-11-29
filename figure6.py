@@ -37,7 +37,7 @@ casenames = ['07','0725','075','0775','08','0825','085','0875','09','0925','095'
 casenames_c5 = ['09','0925','095','0975','10','1025','105']
 
 # field variables
-fields = 'co2vmr,LHFLX,SHFLX,CLDLOW,CLDHGH,LWCF,SWCF'
+fields = 'co2vmr,LHFLX,SHFLX,CLDLOW,CLDHGH,LWCF,SWCF,FSDS,FSDSC,FSNS,FSNSC,FLDS,FLDSC,FLNS,FLNSC'
 
 
 pf.global_annual_average(filebase, outfileloc, fields, 'cam4')
