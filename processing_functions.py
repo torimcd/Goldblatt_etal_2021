@@ -496,6 +496,9 @@ def global_annual_average(filebase, outloc, fields, cam_version):
 # temperature at that level and at the surface, and finally subtract them.
 #-----------------------------------------------------------------------------------------#
 def prep_lts(filebase, outloc, cam_version):
+	cases_cam4 = {'07', '0725', '075', '0775','08', '0825', '085','0875','09', '0925','095', '0975', '10', '1025', '105','1075','11'}
+	cases_cam5 = {'09', '0925','095', '0975', '10', '1025', '105'}
+	
 	if cam_version == 'cam4':
 		outfilebase = outloc + 'c4_lts'
 		casenames = cases_cam4
@@ -561,6 +564,9 @@ def prep_lts(filebase, outloc, cam_version):
 def prep_eis(filebase, outloc, cam_version):
 	# EIS uses LTS so run the LTS prep if not done already
 	prep_lts(filebase, outloc, cam_version)
+
+	cases_cam4 = {'07', '0725', '075', '0775','08', '0825', '085','0875','09', '0925','095', '0975', '10', '1025', '105','1075','11'}
+	cases_cam5 = {'09', '0925','095', '0975', '10', '1025', '105'}
 
 	if cam_version == 'cam4':
 		outfilebase = outloc + 'c4_eis'
@@ -634,6 +640,9 @@ def prep_eis(filebase, outloc, cam_version):
 # one for the high waterpath, one for the low waterpath.
 #-----------------------------------------------------------------------------------------#
 def total_waterpath(filebase, outloc, cam_version):
+	cases_cam4 = {'07', '0725', '075', '0775','08', '0825', '085','0875','09', '0925','095', '0975', '10', '1025', '105','1075','11'}
+	cases_cam5 = {'09', '0925','095', '0975', '10', '1025', '105'}
+
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
 		# the processed filenames

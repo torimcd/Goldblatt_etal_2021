@@ -28,30 +28,30 @@ import processing_functions as pf
 download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
 
 filebase = download_path + 'FYSP_clouds_archive/CAM4/'
+filebase_c5 = download_path + 'FYSP_clouds_archive/CAM5/'
 outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
 
 # ------------------------------------
 
-casenames = ['0.7','0.725','0.75','0.775','0.8','0.825','0.85','0.875','0.9','0.925','0.95','0.975','1.0','1.025','1.05','1.075','1.1']
-casenames_c5 =  ['0.9','0.925','0.95','0.975','1.0','1.025','1.05']
-
+casenames = ['07','0725','075','0775','08','0825','085','0875','09','0925','095','0975','10','1025','105','1075','11']
+casenames_c5 = ['09','0925','095','0975','10','1025','105']
 
 # field variables
 fields = 'co2vmr,LHFLX,SHFLX,CLDLOW,CLDHGH,LWCF,SWCF'
 
 
-pf.global_annual_average(filebaase, outfileloc, fields, 'cam4')
-pf.global_annual_average(filebaase, outfileloc, fields, 'cam5')
-pf.prep_eis(fielbase, outfileloc, fields, 'cam4')
-pf.prep_eis(fielbase, outfileloc, fields, 'cam5')
-pf.total_waterpath(fielbase, outfileloc, fields, 'cam4')
+pf.global_annual_average(filebase, outfileloc, fields, 'cam4')
+pf.global_annual_average(filebase_c5, outfileloc, fields, 'cam5')
+pf.prep_eis(filebase, outfileloc, 'cam4')
+pf.prep_eis(filebase_c5, outfileloc, 'cam5')
+pf.total_waterpath(filebase, outfileloc, 'cam4')
 
 
 exp = [79219.8, 52021.4, 31909.4, 18299.8, 9552.6, 4780.9, 2154.7, 903.8, 368.9, 139.2, 51.4]
 sc = [0.8,0.825,0.85,0.875,0.9,0.925,0.95,0.975,1.0,1.025,1.05]
 
 sc_all = ['0.7','0.725','0.75','0.775','0.8','0.825','0.85','0.875','0.9','0.925','0.95','0.975','1.0','1.025','1.05','1.075','1.1']
-sc_c5 = ['0.9','0.925','0.95','0.975','1.0','1.025','1.05']
+sc_c5 =  ['0.9','0.925','0.95','0.975','1.0','1.025','1.05']
 
 filenames = ['c4_global_average',
 	'exp',
@@ -134,7 +134,7 @@ letters = ['a', 'b', 'c', 'd', 'e', 'f']
 
 
 #create plot
-fig = plt.figure()
+fig = plt.figure(figsize=(20,6))
 
 # container 
 grid = gridspec.GridSpec(2, 3, wspace=0.2, hspace=0.2)	
@@ -163,8 +163,8 @@ for l in letters:
 		
 		for CASE in casenames:
 			CASENAME = casenames[i]
-			outfilebase = 'eis_'
-			lts_outfilebase = 'lts_'		
+			outfilebase = 'c4_eis_' + CASENAME + '_'
+			lts_outfilebase = 'c4_lts_' + CASENAME + '_'	
 
 			lcl = []
 			z700 = []
@@ -176,7 +176,7 @@ for l in letters:
 
 	
 			# GET LCL
-			dsloc = filebase + CASENAME+'/'+outfilebase+'_lcl.nc'
+			dsloc = outfileloc + outfilebase+'lcl.nc'
 			if os.path.isfile(dsloc):
 
 				# open the file and get out the variable
@@ -186,7 +186,7 @@ for l in letters:
 				lcl = lcl.flatten()
 		
 			#GET z700
-			dsloc = filebase + CASENAME+'/'+outfilebase+'_z700.nc'
+			dsloc = outfileloc + outfilebase+'z700.nc'
 			if os.path.isfile(dsloc):
 		
 				# open the file and get out the variable
@@ -197,7 +197,7 @@ for l in letters:
 		
 		
 			#GET lts
-			dsloc = filebase + CASENAME+'/'+lts_outfilebase+'sub.nc'
+			dsloc = outfileloc + lts_outfilebase+'lts.nc'
 			if os.path.isfile(dsloc):
 		
 				# open the file and get out the variable
@@ -207,7 +207,7 @@ for l in letters:
 				lts = lts.flatten()
 		
 			#GET qs850
-			dsloc = filebase + CASENAME+'/'+outfilebase+'_qs850.nc'
+			dsloc = outfileloc + outfilebase+'qs850.nc'
 			if os.path.isfile(dsloc):
 		
 				# open the file and get out the variable
@@ -217,7 +217,7 @@ for l in letters:
 				qs850 = qs850.flatten()	
 		
 			#GET tempsum
-			dsloc = filebase + CASENAME+'/'+outfilebase+'_tempsum.nc'
+			dsloc = outfileloc + outfilebase+'tempsum.nc'
 			if os.path.isfile(dsloc):
 		
 				# open the file and get out the variable
@@ -226,26 +226,28 @@ for l in letters:
 				ds.close() #close the file
 				tempsum = tempsum.flatten()
 		
-		
-			
 			pal = (9.9)*(1-(1+2450000*qs850/(287.058*(tempsum/2)))/(1+(2450000**2)*qs850/(993*461.4*((tempsum/2)**2))))	
 		
 			eis = lts - pal*((z700/1000)-lcl)
+
 			eisplot.append(eis.item(0))
 			ltsplot.append(lts.item(0))
 			i = i+1
 
 		ax.plot(sc_all, eisplot, marker='o', markeredgewidth=0.0, color='green', 
-		label='EIS CAM4')
+		label='EIS CAM4', rasterized=True)
 
 		ax.plot(sc_all, ltsplot, marker='o', markeredgewidth=0.0, color='lightgreen', 
-		label='LTS CAM4')
+		label='LTS CAM4', rasterized=True)
 
 
 		
 		i = 0
 		for CASE in casenames_c5:
 			CASENAME = casenames_c5[i]
+
+			outfilebase = 'c5_eis_' + CASENAME + '_'
+			lts_outfilebase = 'c5_lts_'	 + CASENAME + '_'	
 
 			lcl = []
 			z700 = []
@@ -256,7 +258,7 @@ for l in letters:
 			eisc5 = []
 
 			# GET LCL
-			dsloc = filebase_c5 + CASENAME+'/'+outfilebase+'_lcl.nc'
+			dsloc = outfileloc + outfilebase +'lcl.nc'
 			if os.path.isfile(dsloc):
 		
 				# open the file and get out the variable
@@ -266,7 +268,7 @@ for l in letters:
 				lcl = lcl.flatten()
 		
 			#GET z700
-			dsloc = filebase_c5 + CASENAME+'/'+outfilebase+'_z700.nc'
+			dsloc = outfileloc + outfilebase+'z700.nc'
 			if os.path.isfile(dsloc):
 		
 				# open the file and get out the variable
@@ -277,7 +279,7 @@ for l in letters:
 		
 		
 			#GET lts
-			dsloc = filebase_c5 + CASENAME+'/'+lts_outfilebase+'sub.nc'
+			dsloc = outfileloc + lts_outfilebase+'lts.nc'
 			if os.path.isfile(dsloc):
 		
 				# open the file and get out the variable
@@ -287,7 +289,7 @@ for l in letters:
 				lts = lts.flatten()
 		
 			#GET qs850
-			dsloc = filebase_c5 + CASENAME+'/'+outfilebase+'_qs850.nc'
+			dsloc = outfileloc + outfilebase+'qs850.nc'
 			if os.path.isfile(dsloc):
 
 				# open the file and get out the variable
@@ -297,7 +299,7 @@ for l in letters:
 				qs850 = qs850.flatten()	
 		
 			#GET tempsum
-			dsloc = filebase_c5 + CASENAME+'/'+outfilebase+'_tempsum.nc'
+			dsloc = outfileloc + outfilebase+'tempsum.nc'
 			if os.path.isfile(dsloc):
 
 				# open the file and get out the variable
@@ -307,7 +309,7 @@ for l in letters:
 				tempsum = tempsum.flatten()
 		
 			
-			if os.path.isdir(filebase_c5+CASENAME):
+			if os.path.isdir(outfileloc):
 				pal = (9.9)*(1-(1+2450000*qs850/(287.058*(tempsum/2)))/(1+(2450000**2)*qs850/(993*461.4*((tempsum/2)**2))))	
 		
 				eisc5 = lts - pal*((z700/1000)-lcl)
@@ -317,17 +319,16 @@ for l in letters:
 				i = i+1
 
 		ax.plot(sc_c5, ltsplot_c5, marker='v', markeredgewidth=0.0, linestyle='--', color='lightgreen', 
-		label='LTS CAM5')
+		label='LTS CAM5', rasterized=True)
 		
 		ax.plot(sc_c5, eisplot_c5, marker='v', markeredgewidth=0.0, linestyle='--', color='green', 
-		label='EIS CAM5')
+		label='EIS CAM5', rasterized=True)
 
 
 
 		ax.set_xlim([0.675,1.125])
-		ax.set_ylabel(r'$\mathsf{Potential}$' + ' ' + r'$\mathsf{Temperature}$' + ' ' +r'$\mathsf{(K)}$', fontsize=14)
-		#ax.set_ylim([0,15])
-
+		ax.set_ylabel(r'$\mathsf{Potential}$' + ' ' + r'$\mathsf{Temperature}$' + ' ' +r'$\mathsf{(K)}$', fontsize=10)
+		ax.tick_params(labelsize=10) 
 		
 
 		
@@ -339,7 +340,7 @@ for l in letters:
 		i=0
 		for CASE in casenames:
 			CASENAME = casenames[i]
-			fp_c4 = filebase+CASENAME+'/'+fn+'.nc'
+			fp_c4 = outfileloc + fn + '_' + CASENAME +'.nc'
 			
 			if os.path.isfile(fp_c4):
 	
@@ -357,19 +358,20 @@ for l in letters:
 	
 		if len(plotarray) > 0:
 			#plot the data
-			ax.plot(sc_all, plotarray, marker='o', markeredgewidth=0.0, color=colors[c], label=labels_c4[f])
+			ax.plot(sc_all, plotarray, marker='o', markeredgewidth=0.0, color=colors[c], label=labels_c4[f], rasterized=True)
 			ax.set_xlim([0.675,1.125])
-			ax.set_ylabel(y_labels[n], fontsize=14)
+			ax.set_ylabel(y_labels[n], fontsize=10)
+			ax.tick_params(labelsize=10) 
 
 		if n > 2:
-			ax.set_xlabel(r'$\mathsf{S/S_0}$', fontsize=14)
+			ax.set_xlabel(r'$\mathsf{S/S_0}$', fontsize=10)
 		c +=1
 	
 		i=0
 		plotarray_c5 = []
 		for CASE in casenames_c5:
 			CASENAME = casenames_c5[i]	
-			fp_c5 = filebase_c5+CASENAME+'/'+fn_c5+'.nc'
+			fp_c5 = outfileloc + fn_c5 + '_' + CASENAME +'.nc'
 			if os.path.isfile(fp_c5):
 	
 				# open the file and get out the variable
@@ -386,7 +388,7 @@ for l in letters:
 	
 		if len(plotarray_c5) > 0:
 			#plot the data
-			ax.plot(sc_c5, plotarray_c5, marker='v', markeredgewidth=0.0, linestyle='--', alpha=1, color=colors[c], label=labels_c5[f])
+			ax.plot(sc_c5, plotarray_c5, marker='v', markeredgewidth=0.0, linestyle='--', alpha=1, color=colors[c], label=labels_c5[f], rasterized=True)
 
 		c +=1
 
@@ -397,7 +399,7 @@ for l in letters:
 
 
 	if (field == 'exp'):
-		ax.plot(sc, exp, marker='.', color='lightgrey', label='Expectation')
+		ax.plot(sc, exp, marker='.', color='lightgrey', label='Expectation', rasterized=True)
 
 	else:
 		# CAM4
@@ -405,7 +407,7 @@ for l in letters:
 		plotarray = []
 		for CASE in casenames:
 			CASENAME = casenames[i]
-			fp_c4 = filebase+CASENAME+'/'+fn+'.nc'
+			fp_c4 = outfileloc + fn + '_' + CASENAME + '.nc'
 			if os.path.isfile(fp_c4):
 	
 				# open the file and get out the variable
@@ -423,7 +425,7 @@ for l in letters:
 
 		if len(plotarray) > 0:
 			#plot the data
-			ax.plot(sc_all, plotarray, marker='o', markeredgewidth=0.0, color=colors[c], label=labels_c4[f])
+			ax.plot(sc_all, plotarray, marker='o', markeredgewidth=0.0, color=colors[c], label=labels_c4[f], rasterized=True)
 
 		c +=1
 	
@@ -431,7 +433,7 @@ for l in letters:
 		plotarray_c5 = []
 		for CASE in casenames_c5:
 			CASENAME = casenames_c5[i]	
-			fp_c5 = filebase_c5+CASENAME+'/'+fn_c5+'.nc'
+			fp_c5 = outfileloc + fn_c5 + '_' + CASENAME +'.nc'
 			if os.path.isfile(fp_c5):
 	
 				# open the file and get out the variable
@@ -448,17 +450,18 @@ for l in letters:
 	
 		if len(plotarray_c5) > 0:
 			#plot the data
-			ax.plot(sc_c5, plotarray_c5, marker='v', markeredgewidth=0.0, linestyle='--', alpha=1, color=colors[c], label=labels_c5[f])
+			ax.plot(sc_c5, plotarray_c5, marker='v', markeredgewidth=0.0, linestyle='--', alpha=1, color=colors[c], label=labels_c5[f], rasterized=True)
 
 		c +=1
 
 	# add letter annotation
-	plt.text(-0.15, 1.0, letters[n], fontsize=14, fontweight="bold", transform=ax.transAxes)
+	plt.text(-0.15, 1.0, letters[n], fontsize=10, fontweight="bold", transform=ax.transAxes)
 	ax.set_ylim(y_scales[n])
+	ax.tick_params(labelsize=10) 
 
 
 	# Display the legend below the plot
-	plt.legend(loc=0, frameon=False, fontsize=12)
+	plt.legend(loc=0, frameon=False, fontsize=10)
 	if n == 0:
 		ax.set_yscale("log")
 	
@@ -468,5 +471,5 @@ for l in letters:
 
 plt.show()
 
-fig.savefig("figure4.pdf", bbox_inches='tight')
+fig.savefig("figure6.pdf", bbox_inches='tight')
 
