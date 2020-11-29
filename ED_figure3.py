@@ -32,8 +32,8 @@ fields = 'CLDHGH,CLDLOW,LHFLX,LWCF,PRECC,PRECL,SHFLX,SWCF,TS'
 # process the fields we're plotting
 pf.map_annual_average(filebase, outfileloc, 'cam5', fields) # averages fields over years 31-60, retaining location so can be plotted in map view
 pf.map_vert_velocity(filebase, outfileloc, 'cam5') # the same as above but for vertical velocity selected at 700 hPa
-pf.prep_lts(filebase, outfileloc, 'cam5') # extracts and calculates LTS and saves to new file
-pf.prep_eis(filebase, outfileloc, 'cam5') # extracts and calculates EIS and saves to new file
+pf.map_prep_lts(filebase, outfileloc, 'cam5') # extracts and calculates LTS and saves to new file
+pf.map_prep_eis(filebase, outfileloc, 'cam5') # extracts and calculates EIS and saves to new file
 
 
 # model climatology

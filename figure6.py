@@ -6,6 +6,8 @@ website: http://torimcd.github.com
 license: BSD
 
 """
+import matplotlib
+matplotlib.use("Agg")
 
 import os
 import sys
@@ -16,28 +18,34 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib import ticker
 from mpl_toolkits.basemap import Basemap
+import processing_functions as pf
 
 
-filebase = '/home/vmcd/projects/modelOutput/gcmexpt/CAM4/'
-filebase_c5 = '/home/vmcd/projects/modelOutput/gcmexpt/CAM5/'
+# ------------------------------------------------------------------------
+# change this section to match where you downloaded the model output files 
+# ------------------------------------------------------------------------
+
+download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
+
+filebase = download_path + 'FYSP_clouds_archive/CAM4/'
+outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
+
+# ------------------------------------
 
 casenames = ['0.7','0.725','0.75','0.775','0.8','0.825','0.85','0.875','0.9','0.925','0.95','0.975','1.0','1.025','1.05','1.075','1.1']
 casenames_c5 =  ['0.9','0.925','0.95','0.975','1.0','1.025','1.05']
 
 
 # field variables
-fields= ['co2vmr',
-	'exp',
-	'LHFLX',
-	'SHFLX',
-	'EIS',
-	'EIS',
-	'CLDLOW',
-	'CLDHGH',
-	'ICLDTWP', 
-	'ICLDTWP',
-	'LWCF',
-	'SWCF']
+fields = 'co2vmr,LHFLX,SHFLX,CLDLOW,CLDHGH,LWCF,SWCF'
+
+
+pf.global_annual_average(filebaase, outfileloc, fields, 'cam4')
+pf.global_annual_average(filebaase, outfileloc, fields, 'cam5')
+pf.prep_eis(fielbase, outfileloc, fields, 'cam4')
+pf.prep_eis(fielbase, outfileloc, fields, 'cam5')
+pf.total_waterpath(fielbase, outfileloc, fields, 'cam4')
+
 
 exp = [79219.8, 52021.4, 31909.4, 18299.8, 9552.6, 4780.9, 2154.7, 903.8, 368.9, 139.2, 51.4]
 sc = [0.8,0.825,0.85,0.875,0.9,0.925,0.95,0.975,1.0,1.025,1.05]
@@ -45,31 +53,31 @@ sc = [0.8,0.825,0.85,0.875,0.9,0.925,0.95,0.975,1.0,1.025,1.05]
 sc_all = ['0.7','0.725','0.75','0.775','0.8','0.825','0.85','0.875','0.9','0.925','0.95','0.975','1.0','1.025','1.05','1.075','1.1']
 sc_c5 = ['0.9','0.925','0.95','0.975','1.0','1.025','1.05']
 
-filenames = ['global_annual_average',
+filenames = ['c4_global_average',
 	'exp',
-	'global_annual_average',
-	'global_annual_average',
-	'eis',
-	'eis',
-	'global_annual_average',
-	'global_annual_average',
-	'totalwaterpath_lowman',
-	'totalwaterpath_highman',
-	'global_annual_average',
-	'global_annual_average']
+	'c4_global_average',
+	'c4_global_average',
+	'c4_eis',
+	'c4_eis',
+	'c4_global_average',
+	'c4_global_average',
+	'c4_wp_low',
+	'c4_wp_high',
+	'c4_global_average',
+	'c4_global_average']
 
-filenames_c5 = ['global_annual_average',
+filenames_c5 = ['c5_global_average',
 	'exp',
-	'global_annual_average',
-	'global_annual_average',
-	'eis',
-	'eis',
-	'global_annual_average',
-	'global_annual_average',
-	'totalwaterpath_lowman',
-	'totalwaterpath_highman',
-	'global_annual_average',
-	'global_annual_average']
+	'c5_global_average',
+	'c5_global_average',
+	'c5_eis',
+	'c5_eis',
+	'c5_global_average',
+	'c5_global_average',
+	'c5_wp_low',
+	'c5_wp_high',
+	'c5_global_average',
+	'c5_global_average']
 
 labels_c4 = ['CAM4',
 	'expected',
@@ -96,6 +104,20 @@ labels_c5 = ['CAM5',
 	'High CAM5',
 	'Longwave CAM5',
 	'Shortwave CAM5']
+
+# field variables
+fields= ['co2vmr',
+	'exp',
+	'LHFLX',
+	'SHFLX',
+	'EIS',
+	'EIS',
+	'CLDLOW',
+	'CLDHGH',
+	'ICLDTWP', 
+	'ICLDTWP',
+	'LWCF',
+	'SWCF']
 
 colors = ['black', 'black', 'saddlebrown', 'saddlebrown', 'peru', 'peru', 'blue', 'blue', 'blue', 'blue', 'lightskyblue', 'lightskyblue', 'blue', 'blue', 'lightskyblue', 'lightskyblue','salmon', 'salmon', 'red','red']
 
