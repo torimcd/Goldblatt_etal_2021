@@ -14,7 +14,6 @@ import numpy as np
 import netCDF4
 import climt 
 import json
-from scipy.io import loadmat
 
 
 #-----------------------------------------------------------------------------------------#
@@ -125,6 +124,7 @@ def map_vert_velocity(filebase, outloc, cam_version):
 # one for the high waterpath, one for the low waterpath.
 #-----------------------------------------------------------------------------------------#
 def map_total_waterpath(filebase, outloc, cam_version):
+	cases_cam4 = {'08','09','10'} # we need the S/S0=0.9 case for these plots
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
 		# the processed filenames
@@ -169,6 +169,8 @@ def map_total_waterpath(filebase, outloc, cam_version):
 # temperature at that level and at the surface, and finally subtract them.
 #-----------------------------------------------------------------------------------------#
 def map_prep_lts(filebase, outloc, cam_version):
+	cases_cam4 = {'08','09','10'} # we need the S/S0=0.9 case for these plots
+
 	if cam_version == 'cam4':
 		outfilebase = outloc + 'c4_lts_map'
 		casenames = cases_cam4
@@ -232,6 +234,8 @@ def map_prep_lts(filebase, outloc, cam_version):
 # gradient.
 #-----------------------------------------------------------------------------------------#
 def map_prep_eis(filebase, outloc, cam_version):
+	cases_cam4 = {'08','09','10'} # we need the S/S0=0.9 case for these plots
+	
 	# EIS uses LTS so run the LTS prep if not done already
 	map_prep_lts(filebase, outloc, cam_version)
 
@@ -445,6 +449,8 @@ def cloud_forcing_all(filebase, outloc, fields, cam_version):
 				syscall = r"//usr//bin//cdo -timmean -yearmean " + selyear + " -select,name="+fields+" "+infile+" "+outfile
 				print(syscall)
 				os.system(syscall)
+
+
 
 #-----------------------------------------------------------------------------------------#
 # This function is used to prepare the model output to be plotted in figure 6.
@@ -1469,3 +1475,176 @@ def calculate_rad_fluxes(filebase):
 	return(fluxes_all)
 
 
+def prep_anomaly_histograms(download_path, outloc):
+	filebase = download_path + 'FYSP_clouds_archive/CAM4/'
+	filebase_c5 = download_path + 'FYSP_clouds_archive/CAM5/'
+
+	cases_cam4 = {'08','09','10'} # we need the S/S0=0.9 case for these plots
+	cases_cam5 = {'09','10'}
+
+	# prep the eis, lts, waterpath maps if haven't yet got it
+	map_prep_eis(filebase, outloc, 'cam4')
+	map_prep_eis(filebase_c5, outloc, 'cam5')
+	map_prep_lts(filebase, outloc, 'cam4')
+	map_prep_lts(filebase_c5, outloc, 'cam5')
+	map_total_waterpath(filebase, outloc, 'cam4')
+
+	
+	# ------ CAM4
+	cam_version = 'cam4'
+	for case in cases_cam4:
+		selyear = '-selyear,21/40'	
+		sellevel = '-sellevel,696.79629'
+
+		# for absolute humidity
+		ah700 = outloc + 'c4_700ah_' + case + '.nc'
+		ah1000 = outloc  + 'c4_1000ah_' + case + '.nc'
+	
+		# for others
+		swcf = outloc + 'c4_swcf_' + case + '.nc'
+		cldlow = outloc + 'c4_cldlow_' + case + '.nc'
+		lhflx = outloc + 'c4_lhflx_' + case + '.nc'
+
+		# for ts
+		ts = outloc + 'c4_ts_' + case + '.nc'
+
+
+		# absolute humidity
+		if not os.path.isfile(ah700):
+			infile = filebase + cam_version + '_' + case + '.nc'
+
+			# calc Q at 700 hPa
+			syscall = r"//usr//bin//cdo timmean " + selyear + ' -select,name=Q ' + sellevel +  ' ' + infile + ' ' + ah700
+			print(syscall)
+			os.system(syscall)
+
+		# absolute humidity
+		if not os.path.isfile(ah1000):
+			infile = filebase + cam_version + '_' + case + '.nc'
+
+			# calc Q at surface
+			syscall = r"//usr//bin//cdo timmean " + selyear + ' -select,name=QREFHT ' + infile + ' ' + ah1000
+			print(syscall)
+			os.system(syscall)
+
+
+		# Other variables
+		if not os.path.isfile(swcf):
+			infile = filebase + cam_version + '_' + case + '.nc'
+			# get swcf
+			syscall = r"//usr//bin//cdo  timmean " + selyear + ' -select,name=SWCF '+infile + ' ' + swcf
+			print(syscall)
+			os.system(syscall)
+
+
+
+		# CLDLOW
+		if not os.path.isfile(cldlow):
+			infile = filebase + cam_version + '_' + case + '.nc'
+
+			# get cloudlow
+			syscall = r"//usr//bin//cdo  timmean "  + selyear + ' -select,name=CLDLOW '+infile + ' ' + cldlow
+			print(syscall)
+			os.system(syscall)
+
+
+		# LHFLX
+		if not os.path.isfile(lhflx):
+			infile = filebase + cam_version + '_' + case + '.nc'
+			
+			# get lhflx
+			syscall = r"//usr//bin//cdo  timmean " + selyear + ' -select,name=LHFLX '+infile + ' ' + lhflx
+			print(syscall)
+			os.system(syscall)
+
+
+		# TS
+		if not os.path.isfile(ts):
+			infile = filebase + cam_version + '_' + case + '.nc'
+
+			# get ts
+			syscall = r"//usr//bin//cdo  timmean " + selyear + ' -select,name=TS '+infile + ' ' + ts
+			print(syscall)
+			os.system(syscall)
+
+
+	# ----- CAM5
+	cam_version='cam5'
+	for case in cases_cam5:
+		selyear = '-selyear,31/40'	
+		sellevel = '-sellevel,691.389430314302'
+
+
+		# for absolute humidity
+		ah700 = outloc + 'c5_700ah_' + case + '.nc'
+		ah1000 = outloc  + 'c5_1000ah_' + case + '.nc'
+	
+		# for others
+		swcf = outloc + 'c5_swcf_' + case + '.nc'
+		cldlow = outloc + 'c5_cldlow_' + '.nc'
+		lhflx = outloc + 'c5_lhflx_' + '.nc'
+
+		# for ts
+		ts = outloc + 'c5_ts_' + case + '.nc'
+
+
+		# absolute humidity
+		if not os.path.isfile(ah700):
+			infile = filebase_c5 + cam_version + '_' + case + '.nc'
+
+			# calc Q at 700 hPa
+			syscall = r"//usr//bin//cdo timmean " + selyear + ' -select,name=Q ' + sellevel +  ' ' + infile + ' ' + ah700
+			print(syscall)
+			os.system(syscall)
+		
+		# absolute humidity
+		if not os.path.isfile(ah1000):
+			infile = filebase_c5 + cam_version + '_' + case + '.nc'
+
+			# calc Q at surface
+			syscall = r"//usr//bin//cdo timmean " + selyear + ' -select,name=QREFHT ' + infile + ' ' + ah1000
+			print(syscall)
+			os.system(syscall)
+
+
+		# Other variables
+		if not os.path.isfile(swcf):
+			infile = filebase_c5 + cam_version + '_' + case + '.nc'
+			# get swcf
+			syscall = r"//usr//bin//cdo  timmean " + selyear + ' -select,name=SWCF '+infile + ' ' + swcf
+			print(syscall)
+			os.system(syscall)
+
+
+
+		# CLDLOW
+		if not os.path.isfile(cldlow):
+			infile = filebase_c5 + cam_version + '_' + case + '.nc'
+
+			# get cloudlow
+			syscall = r"//usr//bin//cdo  timmean "  + selyear + ' -select,name=CLDLOW '+infile + ' ' + cldlow
+			print(syscall)
+			os.system(syscall)
+
+
+		# LHFLX
+		if not os.path.isfile(lhflx):
+			infile = filebase_c5 + cam_version + '_' + case + '.nc'
+			
+			# get lhflx
+			syscall = r"//usr//bin//cdo  timmean " + selyear + ' -select,name=LHFLX '+infile + ' ' + lhflx
+			print(syscall)
+			os.system(syscall)
+
+
+		# TS
+		if not os.path.isfile(ts):
+			infile = filebase_c5 + cam_version + '_' + case + '.nc'
+
+			# get ts
+			syscall = r"//usr//bin//cdo  timmean " + selyear + ' -select,name=TS '+infile + ' ' + ts
+			print(syscall)
+			os.system(syscall)
+
+
+	

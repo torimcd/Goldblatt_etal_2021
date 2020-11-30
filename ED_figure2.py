@@ -60,7 +60,8 @@ sc_c5 = ['1.05','1.025','1.0', '0.975', '0.95','0.925','0.9']
 
 
 #create plot
-fig = plt.figure(figsize=(10, 11))
+fig = plt.figure(figsize=(7.08661, 7.28346))
+#fig = plt.figure(figsize=(10, 11))
 ax = plt.subplot(211)
 
 sw_dn_plot = []
@@ -204,16 +205,16 @@ hl = sorted(zip(handles, labels), key=operator.itemgetter(1))
 handles2, labels2 = zip(*hl)
 
 # Display the legend below the plot
-plt.legend(handles2, labels2, bbox_to_anchor=(0., -0.3, 1., .102), loc=3,ncol=3, mode="expand", borderaxespad=0., prop={"size":10})
+plt.legend(handles2, labels2, bbox_to_anchor=(0., -0.3, 1., .102), loc=3,ncol=3, mode="expand", borderaxespad=0., prop={"size":7})
 
-plt.title('Global Average Surface Energy Budget', fontsize=10)
-plt.xlabel(r'$\mathsf{S/S_0}$', fontsize=10)
-plt.ylabel(r'$\mathsf{Flux}$' + ' ' +r'$\mathsf{(W/m^2)}$', fontsize=10)
+plt.title('Global Average Surface Energy Budget', fontsize=7)
+plt.xlabel(r'$\mathsf{S/S_0}$', fontsize=7)
+plt.ylabel(r'$\mathsf{Flux}$' + ' ' +r'$\mathsf{(W/m^2)}$', fontsize=7)
 plt.minorticks_on()
-ax.tick_params(labelsize=10) 
+ax.tick_params(labelsize=7) 
 plt.axis([0.675,1.125,0,400])
 plt.grid()
 plt.show()
 
-fig.savefig("ED_figure2.pdf", bbox_inches='tight')
+fig.savefig("ED_figure2.eps", format='eps', bbox_inches='tight')
 

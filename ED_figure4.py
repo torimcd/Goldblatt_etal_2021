@@ -61,9 +61,8 @@ eis_lcl_file = 'c5_eis_map_lcl.nc'
 eis_qs850_file = 'c5_eis_map_qs850.nc'
 eis_ = ''
 
-#create figure - use figsize=(8.5, 11) to make bigger
-#fig = plt.figure(figsize=(3.46457, 4.48356))
-fig = plt.figure(figsize=(8.5,11))
+#create figure 
+fig = plt.figure(figsize=(7.08661, 9.17))
 
 # set up container 
 outer_grid = gridspec.GridSpec(1, 2, wspace=0.2, hspace=0.1, width_ratios=(2,1))
@@ -147,7 +146,7 @@ for p in climfields:
 		# add letter annotation
 		plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 		# add heading
-		plt.text(0.55, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
+		plt.text(0.65, 1.05, climheadings[n], fontsize=7, transform=ax.transAxes)
 
 	# plot the S/So = 0.8 case
 	ax = fig.add_subplot(climabsgrid[a])
@@ -195,6 +194,7 @@ for p in climfields:
 		cb = plt.colorbar(cs, cax=ax)
 
 		cb.ax.tick_params(labelsize=6) 
+		cb.ax.yaxis.offsetText.set(size=6)
 		tick_locator = ticker.MaxNLocator(nbins=5)
 		cb.locator = tick_locator
 		cb.update_ticks()
@@ -230,6 +230,7 @@ for p in climfields:
 
 		cb.set_label(label=units_all[n], fontsize=6)
 		cb.ax.tick_params(labelsize=6) 
+		cb.ax.yaxis.offsetText.set(size=6)
 		tick_locator = ticker.MaxNLocator(nbins=5)
 		cb.locator = tick_locator
 		cb.update_ticks()
@@ -486,7 +487,7 @@ cs.set_edgecolor("face")
 # add letter annotation
 plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.65, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
+plt.text(0.65, 1.05, climheadings[n], fontsize=7, transform=ax.transAxes)
 
 # Plot PREC Eight **************************** 
 ax = fig.add_subplot(climabsgrid[a])
@@ -516,6 +517,7 @@ a=a+1
 cb = plt.colorbar(cs, cax=ax)
 
 cb.ax.tick_params(labelsize=6) 
+cb.ax.yaxis.offsetText.set(size=6)
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -546,9 +548,11 @@ cs.set_edgecolor("face")
 # plot the colorbar - DIFF value
 ax = fig.add_subplot(climdiffgrid[d])
 d=d+1
-cb = plt.colorbar(cs, cax=ax, label='K')
+cb = plt.colorbar(cs, cax=ax)
 
+cb.set_label(label='K', fontsize=6)
 cb.ax.tick_params(labelsize=6) 
+cb.ax.yaxis.offsetText.set(size=6)
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -583,7 +587,7 @@ cs.set_edgecolor("face")
 # add letter annotation
 plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.65, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
+plt.text(0.65, 1.05, climheadings[n], fontsize=7, transform=ax.transAxes)
 
 
 
@@ -615,6 +619,7 @@ a=a+1
 cb = plt.colorbar(cs, cax=ax)
 
 cb.ax.tick_params(labelsize=6) 
+cb.ax.yaxis.offsetText.set(size=6)
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -645,9 +650,11 @@ cs.set_edgecolor("face")
 # plot the colorbar - DIFF value
 ax = fig.add_subplot(climdiffgrid[d])
 d=d+1
-cb = plt.colorbar(cs, cax=ax, label='hPa/s')
+cb = plt.colorbar(cs, cax=ax)
 
+cb.set_label(label='hPa/s', fontsize=6)
 cb.ax.tick_params(labelsize=6) 
+cb.ax.yaxis.offsetText.set(size=6)
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -684,7 +691,7 @@ cs.set_edgecolor("face")
 # add letter annotation
 plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.65, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
+plt.text(0.65, 1.05, climheadings[n], fontsize=7, transform=ax.transAxes)
 
 # Plot LTS Eight **************************** 
 ax = fig.add_subplot(climabsgrid[a])
@@ -714,6 +721,7 @@ a=a+1
 cb = plt.colorbar(cs, cax=ax)
 
 cb.ax.tick_params(labelsize=6) 
+cb.ax.yaxis.offsetText.set(size=6)
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -744,9 +752,11 @@ cs.set_edgecolor("face")
 # plot the colorbar - DIFF value
 ax = fig.add_subplot(climdiffgrid[d])
 d=d+1
-cb = plt.colorbar(cs, cax=ax, label='K')
+cb = plt.colorbar(cs, cax=ax)
 
+cb.set_label(label='K', fontsize=6)
 cb.ax.tick_params(labelsize=6) 
+cb.ax.yaxis.offsetText.set(size=6)
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -782,7 +792,7 @@ cs.set_edgecolor("face")
 # add letter annotation
 plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.65, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
+plt.text(0.65, 1.05, climheadings[n], fontsize=7, transform=ax.transAxes)
 
 # Plot EIS Eight **************************** 
 ax = fig.add_subplot(climabsgrid[a])
@@ -794,8 +804,8 @@ m.drawcoastlines()
 m.drawcountries()
 parallels = [-45, 0, 45]
 meridians = [-90., 0., 90.]
-m.drawparallels(parallels, labels=[False ,False,False, False], fontsize=6)
-m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=6)
+m.drawparallels(parallels, labels=[False ,False,False, False], fontsize=5)
+m.drawmeridians(meridians,labels=[False,False,False,True], fontsize=5)
 		
 # Create 2D lat/lon arrays for Basemap
 lon2d, lat2d = np.meshgrid(lons, lats)
@@ -812,6 +822,7 @@ a=a+1
 cb = plt.colorbar(cs, cax=ax)
 
 cb.ax.tick_params(labelsize=6) 
+cb.ax.yaxis.offsetText.set(size=6)
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -845,6 +856,7 @@ d=d+1
 cb = plt.colorbar(cs, cax=ax, label='K')
 
 cb.ax.tick_params(labelsize=6) 
+cb.ax.yaxis.offsetText.set(size=6)
 tick_locator = ticker.MaxNLocator(nbins=5)
 cb.locator = tick_locator
 cb.update_ticks()
@@ -854,5 +866,5 @@ cb.update_ticks()
 
 plt.show()
 
-fig.savefig("ED_figure4.pdf", bbox_inches='tight')
+fig.savefig("ED_figure4.eps", format='eps', bbox_inches='tight')
 

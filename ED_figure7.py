@@ -40,7 +40,8 @@ outfilebase = 'c5_cloudforcing'
 outer_grid = gridspec.GridSpec(2, 1, wspace=0.1, hspace=0.1)
 
 #create plot
-fig = plt.figure(figsize=(8.5, 9))
+#ig = plt.figure(figsize=(8.5, 9))
+fig = plt.figure(figsize=(7.08661, 8))
 i=0
 n=0
 l=0
@@ -50,6 +51,8 @@ lwcf = 'LWCF'
 
 present = '_10'
 casenames = ['_105','_1025','_10','_0975','_095','_0925','_09' ]
+
+titles =  ['1.05','1.025','1.0','0.975','0.95','0.925','0.9' ]
 
 while i<2:
 	inner_grid = gridspec.GridSpecFromSubplotSpec(3, 3, subplot_spec=outer_grid[i], wspace=0.0, hspace=0.3)	
@@ -66,10 +69,11 @@ while i<2:
 	for y in casenames:
 		CASENAME = casenames[n]
 
-		ax = fig.add_subplot(inner_grid[n])		
-		
-		n=n+1
-	
+		ax = fig.add_subplot(inner_grid[n])	
+		title = titles[n]
+
+		n = n+1
+
 		#plot the data
 		presentcase = outfileloc + outfilebase + present +'.nc'
 		currentcase = outfileloc + outfilebase + CASENAME +'.nc'
@@ -112,13 +116,13 @@ while i<2:
 		
 		# add letter annotation
 		if l==0:
-			plt.text(-0.10, 1.0, "a", fontsize=10, fontweight="bold", transform=ax.transAxes)
+			plt.text(-0.10, 1.0, "a", fontsize=6, fontweight="bold", transform=ax.transAxes)
 		elif l==1:
-			plt.text(-0.10, 1.0, "b", fontsize=10, fontweight="bold", transform=ax.transAxes)
+			plt.text(-0.10, 1.0, "b", fontsize=6, fontweight="bold", transform=ax.transAxes)
 
 		l=l+2
 	
-		ax.set_title(CASENAME[1]+'.'+CASENAME[-1], fontsize=10)
+		ax.set_title(title, fontsize=7)
 	i=i+1
 	
 # Add Colorbar
@@ -132,5 +136,5 @@ cb.update_ticks()
 
 plt.show()
 
-fig.savefig("ED_figure7.pdf", bbox_inches='tight')
+fig.savefig("ED_figure7.eps", format='eps', bbox_inches='tight')
 

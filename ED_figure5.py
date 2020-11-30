@@ -62,9 +62,8 @@ eight = '09'
 
 casenames = {'09': '#97dde5','0925': '#2c7fb8','095': '#4c4cff','0975':'#9366af','10': 'black','1025': '#cb181d','105': '#fcae91',}
 
-#create plot. Replace with below to make bigger
-# fig = plt.figure(figsize=(7.08661, 4.7244067))
-fig = plt.figure(figsize=(18, 12))
+#create plot. 
+fig = plt.figure(figsize=(7.08661, 4.4744))
 
 # container
 outer_grid = gridspec.GridSpec(2, 1, wspace=0, hspace=0.2, height_ratios=(1,3))
@@ -73,10 +72,10 @@ midgrid_top = gridspec.GridSpecFromSubplotSpec(1,2, subplot_spec=outer_grid[0], 
 midgrid_bottom = gridspec.GridSpecFromSubplotSpec(1,2, subplot_spec=outer_grid[1], wspace=0.2, hspace=0.3,width_ratios=(2,1))
 
 # first two columns, absolute value plots
-absgrid = gridspec.GridSpecFromSubplotSpec(4, 3, subplot_spec=midgrid_bottom[0], wspace=0.05, hspace=0.1, width_ratios=(35,35,1))
+absgrid = gridspec.GridSpecFromSubplotSpec(4, 3, subplot_spec=midgrid_bottom[0], wspace=0.05, hspace=0.12, width_ratios=(25,25,1))
 
 # third colum, anomaly plots
-diffgrid = gridspec.GridSpecFromSubplotSpec(4, 2, subplot_spec=midgrid_bottom[1], wspace=0.05, hspace=0.1, width_ratios=(35,1))	
+diffgrid = gridspec.GridSpecFromSubplotSpec(4, 2, subplot_spec=midgrid_bottom[1], wspace=0.05, hspace=0.12, width_ratios=(25,1))	
 
 n=0
 
@@ -111,8 +110,8 @@ for CASENAME in casenames.keys():
 	ts_d = ts_a - ts_p
 
 	#plot the data
-	ax1.plot(lat, ts_a, color=casenames[CASENAME], linewidth=1.5, rasterized=True)
-	ax2.plot(lat, ts_d, color=casenames[CASENAME], linewidth=1.5, rasterized=True)
+	ax1.plot(lat, ts_a, color=casenames[CASENAME], linewidth=1, rasterized=True)
+	ax2.plot(lat, ts_d, color=casenames[CASENAME], linewidth=1, rasterized=True)
 
 	# fix axis tick spacing
 	ax1.xaxis.set_major_locator(ticker.MultipleLocator(30))
@@ -120,16 +119,22 @@ for CASENAME in casenames.keys():
 
 	ax1.yaxis.set_major_locator(ticker.MultipleLocator(20))
 
+	plt.setp(ax1.get_xticklabels(), fontsize=5)
+	plt.setp(ax2.get_xticklabels(), fontsize=5)
+
+	plt.setp(ax1.get_yticklabels(), fontsize=5)
+	plt.setp(ax2.get_yticklabels(), fontsize=5)
+
 
 # axis labels
-ax1.set_ylabel(r'$\mathsf{Temperature}$' +r'$\mathsf{(K)}$', fontsize=12)
-ax1.set_xlabel(r'$\mathsf{Latitude}$', fontsize=12)
-ax2.set_ylabel(r'$\mathsf{Difference}$' + '\n' +r'$\mathsf{(K)}$', fontsize=12)
-ax2.set_xlabel(r'$\mathsf{Latitude}$', fontsize=12)
+ax1.set_ylabel(r'$\mathsf{Temperature}$' +r'$\mathsf{(K)}$', fontsize=5)
+ax1.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
+ax2.set_ylabel(r'$\mathsf{Difference}$' + '\n' +r'$\mathsf{(K)}$', fontsize=5)
+ax2.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
 
-plt.text(-0.10, 1.0, letters[n], fontsize=12, fontweight="bold", transform=ax1.transAxes)
+plt.text(-0.15, 1.0, letters[n], fontsize=6, fontweight="bold", transform=ax1.transAxes)
 n=n+1
-plt.text(-0.10, 1.0, letters[n], fontsize=12, fontweight="bold", transform=ax2.transAxes)
+plt.text(-0.10, 1.0, letters[n], fontsize=6, fontweight="bold", transform=ax2.transAxes)
 n=n+1
 
 
@@ -217,18 +222,17 @@ for p in fields:
 		ax.xaxis.set_major_locator(ticker.MultipleLocator(30))
 
 		# axis labels
-
-		ax.set_ylabel(labs[l], fontsize=12)
+		ax.set_ylabel(labs[l], fontsize=5)
 		l = l+1
 
 		ax.invert_yaxis()
 
 		if n < 5:
 			ax.set_xticklabels([])
-			ax.set_xlabel(labs[l], fontsize=12)
+			ax.set_xlabel(labs[l], fontsize=5)
 			l = l+1
 
-		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=12)
+		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
 
 
 		# This is the fix for the white lines between contour levels
@@ -236,7 +240,10 @@ for p in fields:
   		  i.set_edgecolor("face")
 		
 		# add letter annotation
-		plt.text(-0.15, 1.0, letters[n], fontsize=12, fontweight="bold", transform=ax.transAxes)
+		plt.text(-0.22, 1.0, letters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
+
+		plt.setp(ax.get_xticklabels(), fontsize=5)
+		plt.setp(ax.get_yticklabels(), fontsize=5)
 
 	#plot the data -> S/S0 = 0.9
 	ax = fig.add_subplot(absgrid[a])
@@ -292,11 +299,13 @@ for p in fields:
 		ax.invert_yaxis()
 		ax.set_yticklabels([])
 	
+		plt.setp(ax.get_xticklabels(), fontsize=5)
+		plt.setp(ax.get_yticklabels(), fontsize=5)
 
 		if n < 5:
 			ax.set_xticklabels([])
 
-		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=12)
+		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
 
 
 		# This is the fix for the white lines between contour levels
@@ -307,11 +316,13 @@ for p in fields:
 		ax = fig.add_subplot(absgrid[a])
 		a=a+1
 
-		cb = plt.colorbar(c, cax=ax, label=labs[l])
+		cb = plt.colorbar(c, cax=ax)
+		cb.set_label(label=labs[l], fontsize=5)
 		l = l+1
 
 		tick_locator = ticker.MaxNLocator(nbins=3)
 		cb.locator = tick_locator
+		cb.ax.tick_params(labelsize=5)
 		cb.update_ticks()
 		v=v+1
 
@@ -353,16 +364,18 @@ for p in fields:
 		ax.invert_yaxis()
 		ax.set_yticklabels([])
 
+		plt.setp(ax.get_xticklabels(), fontsize=5)
+		plt.setp(ax.get_yticklabels(), fontsize=5)
 
-		ax.set_ylabel(labs[l], fontsize=12)
+		ax.set_ylabel(labs[l], fontsize=5)
 		l = l+1
 
 		if n < 5:
 			ax.set_xticklabels([])
-			ax.set_xlabel(labs[l], fontsize=12)
+			ax.set_xlabel(labs[l], fontsize=5)
 			l = l+1
 
-		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=12)
+		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
 
 		# This is the fix for the white lines between contour levels
 		for i in c.collections:
@@ -373,11 +386,12 @@ for p in fields:
 		ax = fig.add_subplot(diffgrid[d])
 		d=d+1
 		cb = plt.colorbar(c, cax=ax)
-		cb.set_label(label=labs[l], size=12)
+		cb.set_label(label=labs[l], size=5)
 		l = l+1
 
 		tick_locator = ticker.MaxNLocator(nbins=3)
 		cb.locator = tick_locator
+		cb.ax.tick_params(labelsize=5)
 		cb.update_ticks()
 		v=v+1
 
@@ -388,5 +402,5 @@ for p in fields:
 
 plt.show()
 
-fig.savefig("ED_figure5.pdf", bbox_inches='tight')
+fig.savefig("ED_figure5.eps", format='eps', bbox_inches='tight')
 
