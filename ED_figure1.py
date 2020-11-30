@@ -20,10 +20,10 @@ import matplotlib.pyplot as plt
 # This script plots a table of CO2 and S/So values run in each model
 # ------------------------------------------------------------------------
 
-table_values = ['________________________________________________________',
+table_values = ['_______________________________________________',
 				' ',
 				r'$\mathit{S/S_0}$' + '      ' +   r'$\mathrm{CAM4}$' + ' ' +  r'$\mathrm{CO_2}$' + ' ' + r'$\mathrm{(ppmv)}$' + '      '+   r'$\mathrm{CAM5}$' + ' ' +  r'$\mathrm{CO_2}$' + ' ' + r'$\mathrm{(ppmv)}$',
-				'________________________________________________________',
+				'_______________________________________________',
 
 				'0.700                   130,000 ',
 				'0.725                     92,000 ',
@@ -42,20 +42,20 @@ table_values = ['________________________________________________________',
 				'1.050                            51.4                              35',
 				'1.075                            15.1  ',
 				'1.100                              4.5  ',
-				'________________________________________________________']
+				'_______________________________________________']
 
 
 #create plot
-fig = plt.figure()
+fig = plt.figure(figsize=(3.46457, 4))
 
 space = 0
 for row in table_values:
 	if row == table_values[3] or row == table_values[2]:
-		fs = 14
-		space = space - 0.02
+		fs = 10
+		space = space - 0.01
 
 	else:
-		fs = 12
+		fs = 8
 
 	plt.text(0, 1-space, row, fontsize=fs)
 
@@ -64,5 +64,5 @@ for row in table_values:
 plt.axis('off')
 
 plt.show()
-fig.savefig("ED_figure1.pdf", bbox_inches='tight')
+fig.savefig("ED_figure1.eps", format='eps', bbox_inches='tight')
 
