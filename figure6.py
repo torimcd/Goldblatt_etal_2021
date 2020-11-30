@@ -121,7 +121,7 @@ fields= ['co2vmr',
 
 colors = ['black', 'black', 'saddlebrown', 'saddlebrown', 'peru', 'peru', 'blue', 'blue', 'blue', 'blue', 'lightskyblue', 'lightskyblue', 'blue', 'blue', 'lightskyblue', 'lightskyblue','salmon', 'salmon', 'red','red']
 
-y_labels = [r'$\mathsf{CO_2}$'+ ' '+ r'$\mathsf{Concentration}$' + ' ' + r'$\mathsf{(ppm)}$',
+y_labels = [r'$\mathsf{CO_2}$'+ ' ' + r'$\mathsf{(ppm)}$',
 	r'$\mathsf{Heat}$' + ' ' + r'$\mathsf{Flux}$' + ' ' +r'$\mathsf{(W/m^2)}$',
 	'eis',
 	r'$\mathsf{Cloud}$' + ' ' + r'$\mathsf{Fraction}$' ,
@@ -134,10 +134,10 @@ letters = ['a', 'b', 'c', 'd', 'e', 'f']
 
 
 #create plot
-fig = plt.figure(figsize=(20,6))
+fig = plt.figure(figsize=(7.08661,2.5))
 
 # container 
-grid = gridspec.GridSpec(2, 3, wspace=0.2, hspace=0.2)	
+grid = gridspec.GridSpec(2, 3, wspace=0.3, hspace=0.3)	
 
 # keep track of which plot we're on
 n=0
@@ -234,11 +234,12 @@ for l in letters:
 			ltsplot.append(lts.item(0))
 			i = i+1
 
-		ax.plot(sc_all, eisplot, marker='o', markeredgewidth=0.0, color='green', 
-		label='EIS CAM4', rasterized=True)
 
-		ax.plot(sc_all, ltsplot, marker='o', markeredgewidth=0.0, color='lightgreen', 
-		label='LTS CAM4', rasterized=True)
+		ax.plot(sc_all, eisplot, marker='o', ms=3, markeredgewidth=0.0, color='green', 
+		label='EIS CAM4', rasterized=False)
+
+		ax.plot(sc_all, ltsplot, marker='o', ms=3, markeredgewidth=0.0, color='lightgreen', 
+		label='LTS CAM4', rasterized=False)
 
 
 		
@@ -318,17 +319,20 @@ for l in letters:
 				eisplot_c5.append(eisc5.item(0))
 				i = i+1
 
-		ax.plot(sc_c5, ltsplot_c5, marker='v', markeredgewidth=0.0, linestyle='--', color='lightgreen', 
-		label='LTS CAM5', rasterized=True)
+		ax.plot(sc_c5, ltsplot_c5, marker='v', ms=3, markeredgewidth=0.0, linestyle='--', color='lightgreen', 
+		label='LTS CAM5', rasterized=False)
 		
-		ax.plot(sc_c5, eisplot_c5, marker='v', markeredgewidth=0.0, linestyle='--', color='green', 
-		label='EIS CAM5', rasterized=True)
+		ax.plot(sc_c5, eisplot_c5, marker='v', ms=3, markeredgewidth=0.0, linestyle='--', color='green', 
+		label='EIS CAM5', rasterized=False)
 
 
 
 		ax.set_xlim([0.675,1.125])
-		ax.set_ylabel(r'$\mathsf{Potential}$' + ' ' + r'$\mathsf{Temperature}$' + ' ' +r'$\mathsf{(K)}$', fontsize=10)
-		ax.tick_params(labelsize=10) 
+		ax.set_ylabel(r'$\mathsf{Potential}$' + ' ' + r'$\mathsf{Temperature}$' + ' ' +r'$\mathsf{(K)}$', fontsize=5)
+		ax.tick_params(labelsize=6) 
+
+		plt.setp(ax.get_xticklabels(), fontsize=5)
+		plt.setp(ax.get_yticklabels(), fontsize=5)
 		
 
 		
@@ -358,13 +362,13 @@ for l in letters:
 	
 		if len(plotarray) > 0:
 			#plot the data
-			ax.plot(sc_all, plotarray, marker='o', markeredgewidth=0.0, color=colors[c], label=labels_c4[f], rasterized=True)
+			ax.plot(sc_all, plotarray, marker='o', ms=3, markeredgewidth=0.0, color=colors[c], label=labels_c4[f], rasterized=False)
 			ax.set_xlim([0.675,1.125])
-			ax.set_ylabel(y_labels[n], fontsize=10)
-			ax.tick_params(labelsize=10) 
+			ax.set_ylabel(y_labels[n], fontsize=5)
+			ax.tick_params(labelsize=6) 
 
 		if n > 2:
-			ax.set_xlabel(r'$\mathsf{S/S_0}$', fontsize=10)
+			ax.set_xlabel(r'$\mathsf{S/S_0}$', fontsize=5)
 		c +=1
 	
 		i=0
@@ -388,7 +392,7 @@ for l in letters:
 	
 		if len(plotarray_c5) > 0:
 			#plot the data
-			ax.plot(sc_c5, plotarray_c5, marker='v', markeredgewidth=0.0, linestyle='--', alpha=1, color=colors[c], label=labels_c5[f], rasterized=True)
+			ax.plot(sc_c5, plotarray_c5, marker='v',  ms=3, markeredgewidth=0.0, linestyle='--', alpha=1, color=colors[c], label=labels_c5[f], rasterized=False)
 
 		c +=1
 
@@ -399,7 +403,7 @@ for l in letters:
 
 
 	if (field == 'exp'):
-		ax.plot(sc, exp, marker='.', color='lightgrey', label='Expectation', rasterized=True)
+		ax.plot(sc, exp, marker='.', ms=3, color='lightgrey', label='Expectation', rasterized=False)
 
 	else:
 		# CAM4
@@ -425,7 +429,7 @@ for l in letters:
 
 		if len(plotarray) > 0:
 			#plot the data
-			ax.plot(sc_all, plotarray, marker='o', markeredgewidth=0.0, color=colors[c], label=labels_c4[f], rasterized=True)
+			ax.plot(sc_all, plotarray, marker='o',  ms=3, markeredgewidth=0.0, color=colors[c], label=labels_c4[f], rasterized=False)
 
 		c +=1
 	
@@ -450,18 +454,18 @@ for l in letters:
 	
 		if len(plotarray_c5) > 0:
 			#plot the data
-			ax.plot(sc_c5, plotarray_c5, marker='v', markeredgewidth=0.0, linestyle='--', alpha=1, color=colors[c], label=labels_c5[f], rasterized=True)
+			ax.plot(sc_c5, plotarray_c5, marker='v', ms=3, markeredgewidth=0.0, linestyle='--', alpha=1, color=colors[c], label=labels_c5[f], rasterized=False)
 
 		c +=1
 
 	# add letter annotation
-	plt.text(-0.15, 1.0, letters[n], fontsize=10, fontweight="bold", transform=ax.transAxes)
+	plt.text(-0.22, 1.0, letters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 	ax.set_ylim(y_scales[n])
-	ax.tick_params(labelsize=10) 
+	ax.tick_params(labelsize=5) 
 
 
-	# Display the legend below the plot
-	plt.legend(loc=0, frameon=False, fontsize=10)
+	# Display the legend 
+	plt.legend(loc=0, frameon=False, fontsize=5, prop={"size":5})
 	if n == 0:
 		ax.set_yscale("log")
 	
@@ -471,5 +475,5 @@ for l in letters:
 
 plt.show()
 
-fig.savefig("figure6.pdf", bbox_inches='tight')
+fig.savefig("figure6.eps", format='eps',bbox_inches='tight')
 

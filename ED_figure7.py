@@ -40,7 +40,6 @@ outfilebase = 'c5_cloudforcing'
 outer_grid = gridspec.GridSpec(2, 1, wspace=0.1, hspace=0.1)
 
 #create plot
-#ig = plt.figure(figsize=(8.5, 9))
 fig = plt.figure(figsize=(7.08661, 8))
 i=0
 n=0

@@ -64,7 +64,7 @@ eis_ = ''
 
 #create figure - use figsize=(8.5, 11) to make bigger
 #fig = plt.figure(figsize=(3.46457, 4.48356))
-fig = plt.figure(figsize=(8.5,11))
+fig = plt.figure(figsize=(7.08661, 9.17))
 
 # set up container 
 outer_grid = gridspec.GridSpec(1, 2, wspace=0.2, hspace=0.1, width_ratios=(2,1))
@@ -148,7 +148,7 @@ for p in climfields:
 		# add letter annotation
 		plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 		# add heading
-		plt.text(0.55, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
+		plt.text(0.55, 1.05, climheadings[n], fontsize=7, transform=ax.transAxes)
 
 	# plot the S/So = 0.8 case
 	ax = fig.add_subplot(climabsgrid[a])
@@ -417,7 +417,7 @@ cs.set_edgecolor("face")
 # add letter annotation
 plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.55, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
+plt.text(0.55, 1.05, climheadings[n], fontsize=7, transform=ax.transAxes)
 
 # Plot LTS Eight **************************** 
 ax = fig.add_subplot(climabsgrid[a])
@@ -514,7 +514,7 @@ cs.set_edgecolor("face")
 # add letter annotation
 plt.text(-0.10, 1.0, climletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 # add heading
-plt.text(0.55, 1.05, climheadings[n], fontsize=10, transform=ax.transAxes)
+plt.text(0.55, 1.05, climheadings[n], fontsize=7, transform=ax.transAxes)
 
 # Plot EIS Eight **************************** 
 ax = fig.add_subplot(climabsgrid[a])
@@ -589,5 +589,5 @@ cb.update_ticks()
 
 plt.show()
 
-fig.savefig("figure2.pdf", bbox_inches='tight')
+fig.savefig("figure2.eps", format='eps',bbox_inches='tight')
 

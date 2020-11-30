@@ -40,7 +40,7 @@ outfilebase = 'c4_cloudforcing'
 outer_grid = gridspec.GridSpec(2, 1, wspace=0.1, hspace=0.1)
 
 #create plot
-fig = plt.figure(figsize=(8.5, 8.75))
+fig = plt.figure(figsize=(7.08661, 8))
 i=0
 n=0
 l=0
@@ -110,13 +110,13 @@ while i<2:
 		
 		# add letter annotation
 		if l==0:
-			plt.text(-0.10, 1.0, "a", fontsize=10, fontweight="bold", transform=ax.transAxes)
+			plt.text(-0.10, 1.0, "a", fontsize=6, fontweight="bold", transform=ax.transAxes)
 		elif l==1:
-			plt.text(-0.10, 1.0, "b", fontsize=10, fontweight="bold", transform=ax.transAxes)
+			plt.text(-0.10, 1.0, "b", fontsize=6, fontweight="bold", transform=ax.transAxes)
 
 		l=l+2
 	
-		ax.set_title(CASENAME[1]+'.'+CASENAME[-1], fontsize=10)
+		ax.set_title(CASENAME[1]+'.'+CASENAME[-1], fontsize=7)
 	i=i+1
 
 	
@@ -131,5 +131,5 @@ cb.update_ticks()
 
 plt.show()
 
-fig.savefig("figure5.pdf", bbox_inches='tight')
+fig.savefig("figure5.eps", format='eps',bbox_inches='tight')
 

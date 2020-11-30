@@ -55,10 +55,8 @@ cloudaxislabels = [r'$\mathsf{Fraction}$', r'$\mathsf{g/m^2}$', r'$\mathsf{W/m^2
 cloudvmins = [0,-0.5, 0, -300, 0, -60, 0, -0.5, 0,-300, -110, -60]
 cloudvmaxs = [1, 0.5, 600, 300, 100, 60, 1, 0.5, 700, 300, 0, 60]
 
-
-#create figure - use figsize=(8.5, 9.5) to make bigger
-#fig = plt.figure(figsize=(3.46457, 4.48356))
-fig = plt.figure(figsize=(8.5, 9.5))
+# creat figure
+fig = plt.figure(figsize=(7.08661, 7.86))
 
 # container with 2 rows of 2 columns, first column is grid of absolute value plots, second column is diff plots. First row is cloud climatology, second row is model climatology
 outer_grid = gridspec.GridSpec(1, 2, wspace=0.2, hspace=0.1, width_ratios=(2,1))
@@ -126,7 +124,7 @@ for p in cloudfields:
 	plt.text(-0.10, 1.0, cloudletters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 
 	# add heading
-	plt.text(0.65, 1.05, cloudheadings[n], fontsize=10, transform=ax.transAxes)
+	plt.text(0.65, 1.05, cloudheadings[n], fontsize=7, transform=ax.transAxes)
 
 
 	#plot the data - EIGHT
@@ -213,5 +211,5 @@ for p in cloudfields:
 
 plt.show()
 
-fig.savefig("figure4.pdf", bbox_inches='tight')
+fig.savefig("figure4.eps", format='eps', bbox_inches='tight')
 
