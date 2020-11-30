@@ -48,15 +48,16 @@ table_values = ['________________________________________________________',
 #create plot
 fig = plt.figure()
 
-space = 0.05
+space = 0
 for row in table_values:
-	if row == table_values[2]:
+	if row == table_values[3] or row == table_values[2]:
 		fs = 14
+		space = space - 0.02
 
 	else:
 		fs = 12
 
-	plt.text(0.05, 0.95-space, row, fontsize=fs)
+	plt.text(0, 1-space, row, fontsize=fs)
 
 	space = space + 0.05
 

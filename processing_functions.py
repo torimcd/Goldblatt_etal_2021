@@ -12,7 +12,10 @@ import sys
 import scipy
 import numpy as np
 import netCDF4
+import climt 
+import json
 from scipy.io import loadmat
+
 
 #-----------------------------------------------------------------------------------------#
 # This file contains functions to process the model output for plotting in the figures
@@ -678,3 +681,791 @@ def total_waterpath(filebase, outloc, cam_version):
 				syscall_low = r"//usr//bin//cdo -vertsum -fldmean -timmean -sellevidx,21/26 " + selyear + " -select,name=ICLDTWP " +infile+ " " + outfile_low
 				print(syscall_low)
 				os.system(syscall_low)
+
+
+#-----------------------------------------------------------------------------------------#
+# This function is used to generate the radiative fluxes from CAM5 (fluxes_*.txt files
+# which are provided in data archive /FYSP_clouds_archive/radiative_transfer/CAM5/), 
+# for Extended Data Figure 3.
+#-----------------------------------------------------------------------------------------#
+def generate_fluxes_cam5(filebase):
+	
+	# read in pressure/temp profile
+	infile = filebase +'rad_tr_profile.txt'
+
+	dtype1 = np.dtype([('Pressure','f8'),('Temperature','f8'),('H2O','f8'),('O3','f8'),('P_mid','f8'),('T_mid','f8'),('Water_mid','f8'),('Ozone_mid','f8')])
+	profile = np.loadtxt(infile, dtype=dtype1, skiprows=1)
+
+	p_int = np.array(profile['Pressure'])
+	T_int = np.array(profile['Temperature'])
+	Water = np.array(profile['H2O'])
+	Ozone = np.array(profile['O3'])
+	p_mid = np.array(profile['P_mid'])
+	T_mid = np.array(profile['T_mid'])
+	Water_mid = np.array(profile['Water_mid'])
+	Ozone_mid = np.array(profile['Ozone_mid'])
+
+	# Remove dummy data from last row of mid levels - dummy data added because np.loadtxt requires columns to be same length
+	T_mid = np.resize(T_mid, 41)
+	p_mid = np.resize(p_mid, 41)
+	Water_mid = np.resize(Water_mid, 41)
+	Ozone_mid = np.resize(Ozone_mid, 41)
+
+
+	
+	swradiation = climt.RRTMGShortwave()
+	lwradiation = climt.RRTMGLongwave()
+	surface = climt.SlabSurface()
+
+	# Create shortwave state
+	m_levs=dict(label='levels',values=np.arange(41), units='')
+	i_levs=dict(label='levels', values=np.arange(42), units='')
+	state=climt.get_default_state([swradiation, lwradiation, surface], mid_levels=m_levs, interface_levels=i_levs)
+
+	# Change values to match my atmosphere profile
+	state['surface_temperature'] = state['surface_temperature'] - 11.76
+	state['air_pressure'].values = p_mid.reshape(1,1,41)
+	state['air_pressure_on_interface_levels'].values = p_int.reshape(1,1,42)
+	state['air_temperature'].values = T_mid.reshape(1,1,41)
+	state['specific_humidity'].values = Water_mid.reshape(1,1,41)
+	state['mole_fraction_of_ozone_in_air'].values = Ozone_mid.reshape(1,1,41)
+	state['surface_albedo_for_direct_shortwave'] = state['surface_albedo_for_direct_shortwave'] +0.06
+	state['single_scattering_albedo_due_to_cloud'] = state['single_scattering_albedo_due_to_cloud'] +0.06
+	state['surface_albedo_for_diffuse_shortwave'] = state['surface_albedo_for_diffuse_shortwave'] +0.06
+	state['single_scattering_albedo_due_to_aerosol'] = state['single_scattering_albedo_due_to_aerosol'] +0.06
+	state['surface_albedo_for_diffuse_near_infrared'] = state['surface_albedo_for_diffuse_near_infrared'] +0.06
+	state['surface_albedo_for_direct_near_infrared'] = state['surface_albedo_for_direct_near_infrared'] +0.06
+	state['zenith_angle'] = state['zenith_angle'] + np.pi/3
+
+	state['mole_fraction_of_methane_in_air'] = state['mole_fraction_of_methane_in_air'] + 0.00000184278
+	state['mole_fraction_of_nitrous_oxide_in_air'] = state['mole_fraction_of_nitrous_oxide_in_air'] + 3.28*10**-7
+
+	state['air_pressure'].attrs['units'] = 'hPa'
+	state['air_pressure_on_interface_levels'].attrs['units'] = 'hPa'
+
+
+	# See the state of all variables
+	#print(state)
+
+	# Calc unperturbed fluxes - CO2 at 330 ppm default
+	swtendencies, swdiagnostics = swradiation(state)
+	lwtendencies, lwdiagnostics = lwradiation(state)
+
+	unpert_swup = np.array(swdiagnostics['upwelling_shortwave_flux_in_air']) 
+	unpert_swdown = np.array(swdiagnostics['downwelling_shortwave_flux_in_air']) 
+	unpert_lwup = np.array(lwdiagnostics['upwelling_longwave_flux_in_air'])
+	unpert_lwdown = np.array(lwdiagnostics['downwelling_longwave_flux_in_air']) 
+
+
+	# prepare data to save to file
+	swup_330_data = np.reshape(unpert_swup,42)*0.965529262*0.501472063
+	swdown_330_data = np.reshape(unpert_swdown, 42)*0.965529262*0.501472063
+	lwup_330_data = np.reshape(unpert_lwup,42)
+	lwdown_330_data = np.reshape(unpert_lwdown,42)
+	
+	net_flux_330 = swdown_330_data + lwdown_330_data - swup_330_data - lwup_330_data
+	net_flux_330_data = np.reshape(net_flux_330,42)
+
+
+	# prepare data to save to file
+	c5_pressure = np.reshape(state['air_pressure_on_interface_levels'].values, 42)
+
+	if not os.path.isfile(filebase + "fluxes_330.txt"):
+		# write the data out as json
+		with open(filebase + "fluxes_330.txt", 'w+') as datafile_id:
+			datafile_id.write(json.dumps({'pressure':c5_pressure, 'sw_up':swup_330_data, 'sw_dn':swdown_330_data, 'lw_up':lwup_330_data, 'lw_dn':lwdown_330_data}, default=lambda x: list(x), indent=4))
+	
+
+		
+	if not os.path.isfile(filebase + "fluxes_100.txt"):
+		# ----------------------  Change CO2 concentration - 100ppm --------------------------
+		state['mole_fraction_of_carbon_dioxide_in_air'].values = state['mole_fraction_of_carbon_dioxide_in_air'].values*0.3030303
+
+		# Calc perturbed fluxes
+		swtendencies, swdiagnostics = swradiation(state)
+		lwtendencies, lwdiagnostics = lwradiation(state)
+
+		swup_100 = np.array(swdiagnostics['upwelling_shortwave_flux_in_air'])
+		swdown_100 = np.array(swdiagnostics['downwelling_shortwave_flux_in_air'])
+		lwup_100 = np.array(lwdiagnostics['upwelling_longwave_flux_in_air'])
+		lwdown_100 = np.array(lwdiagnostics['downwelling_longwave_flux_in_air'])
+
+		# prepare data to save to file
+		swup_100_data = np.reshape(swup_100,42)*0.965529262*0.501472063
+		swdown_100_data = np.reshape(swdown_100, 42)*0.965529262*0.501472063
+		lwup_100_data = np.reshape(lwup_100,42)
+		lwdown_100_data = np.reshape(lwdown_100,42)
+
+		net_flux_100 = swdown_100_data + lwdown_100_data - swup_100_data - lwup_100_data -  net_flux_330
+		net_flux_100_data = np.reshape(net_flux_100,42)
+
+		c5_pressure = np.reshape(state['air_pressure_on_interface_levels'].values, 42)
+
+
+		# write the data out as json
+		with open(filebase + "fluxes_100.txt", 'w+') as datafile_id:
+			datafile_id.write(json.dumps({'pressure':c5_pressure, 'sw_up':swup_100_data, 'sw_dn':swdown_100_data, 'lw_up':lwup_100_data, 'lw_dn':lwdown_100_data}, default=lambda x: list(x), indent=4))
+
+
+
+	if not os.path.isfile(filebase + "fluxes_500.txt"):
+		# ------------------ Change CO2 concentration - 500ppm ------------------------
+		state['mole_fraction_of_carbon_dioxide_in_air'].values = state['mole_fraction_of_carbon_dioxide_in_air'].values*1.51515152
+
+		# Calc perturbed fluxes
+		swtendencies, swdiagnostics = swradiation(state)
+		lwtendencies, lwdiagnostics = lwradiation(state)
+
+		swup_500 = np.array(swdiagnostics['upwelling_shortwave_flux_in_air'])
+		swdown_500 = np.array(swdiagnostics['downwelling_shortwave_flux_in_air'])
+		lwup_500 = np.array(lwdiagnostics['upwelling_longwave_flux_in_air'])
+		lwdown_500 = np.array(lwdiagnostics['downwelling_longwave_flux_in_air'])
+
+
+		# prepare data to save to file
+		swup_500_data = np.reshape(swup_500,42)*0.965529262*0.501472063
+		swdown_500_data = np.reshape(swdown_500, 42)*0.965529262*0.501472063
+		lwup_500_data = np.reshape(lwup_500,42)
+		lwdown_500_data = np.reshape(lwdown_500,42)
+
+		net_flux_500 = swdown_500_data + lwdown_500_data - swup_500_data - lwup_500_data - net_flux_330
+		net_flux_500_data = np.reshape(net_flux_500,42)
+
+		# write it out as json
+		with open(filebase + "fluxes_500.txt", 'w+') as datafile_id:
+			datafile_id.write(json.dumps({'pressure':c5_pressure, 'sw_up':swup_500_data, 'sw_dn':swdown_500_data, 'lw_up':lwup_500_data, 'lw_dn':lwdown_500_data}, default=lambda x: list(x), indent=4))
+
+
+
+	if not os.path.isfile(filebase + "fluxes_1000.txt"):
+		# --------------------------- Change CO2 concentration - 1000ppm ----------------------
+		state['mole_fraction_of_carbon_dioxide_in_air'].values = state['mole_fraction_of_carbon_dioxide_in_air'].values*3.03030303
+
+		# Calc perturbed fluxes
+		swtendencies, swdiagnostics = swradiation(state)
+		lwtendencies, lwdiagnostics = lwradiation(state)
+
+		swup_1000 = np.array(swdiagnostics['upwelling_shortwave_flux_in_air'])
+		swdown_1000 = np.array(swdiagnostics['downwelling_shortwave_flux_in_air'])
+		lwup_1000 = np.array(lwdiagnostics['upwelling_longwave_flux_in_air'])
+		lwdown_1000 = np.array(lwdiagnostics['downwelling_longwave_flux_in_air'])
+
+
+		# prepare data to save to file
+		swup_1000_data = np.reshape(swup_1000,42)*0.965529262*0.501472063
+		swdown_1000_data = np.reshape(swdown_1000, 42)*0.965529262*0.501472063
+		lwup_1000_data = np.reshape(lwup_1000,42)
+		lwdown_1000_data = np.reshape(lwdown_1000,42)
+
+		net_flux_1000 = swdown_1000_data + lwdown_1000_data - swup_1000_data - lwup_1000_data - net_flux_330
+		net_flux_1000_data = np.reshape(net_flux_1000,42)
+
+		# write the data out as json
+		with open(filebase + "fluxes_1000.txt", 'w+') as datafile_id:
+			datafile_id.write(json.dumps({'pressure':c5_pressure, 'sw_up':swup_1000_data, 'sw_dn':swdown_1000_data, 'lw_up':lwup_1000_data, 'lw_dn':lwdown_1000_data}, default=lambda x: list(x), indent=4))
+
+
+
+
+	if not os.path.isfile(filebase + "fluxes_1500.txt"):
+		# --------------------- Change CO2 concentration - 1500ppm -------------------------
+		state['mole_fraction_of_carbon_dioxide_in_air'].values = state['mole_fraction_of_carbon_dioxide_in_air'].values*4.54545455
+
+		# Calc perturbed fluxes
+		swtendencies, swdiagnostics = swradiation(state)
+		lwtendencies, lwdiagnostics = lwradiation(state)
+
+		swup_1500 = np.array(swdiagnostics['upwelling_shortwave_flux_in_air'])
+		swdown_1500 = np.array(swdiagnostics['downwelling_shortwave_flux_in_air'])
+		lwup_1500 = np.array(lwdiagnostics['upwelling_longwave_flux_in_air'])
+		lwdown_1500 = np.array(lwdiagnostics['downwelling_longwave_flux_in_air'])
+
+
+		# prepare data to save to file
+		swup_1500_data = np.reshape(swup_1500,42)*0.965529262*0.501472063
+		swdown_1500_data = np.reshape(swdown_1500, 42)*0.965529262*0.501472063
+		lwup_1500_data = np.reshape(lwup_1500,42)
+		lwdown_1500_data = np.reshape(lwdown_1500,42)
+
+		net_flux_1500 = swdown_1500_data + lwdown_1500_data - swup_1500_data - lwup_1500_data - net_flux_330
+		net_flux_1500_data = np.reshape(net_flux_1500,42)
+
+		with open(filebase + "fluxes_1500.txt", 'w+') as datafile_id:
+			datafile_id.write(json.dumps({'pressure':c5_pressure, 'sw_up':swup_1500_data, 'sw_dn':swdown_1500_data, 'lw_up':lwup_1500_data, 'lw_dn':lwdown_1500_data}, default=lambda x: list(x), indent=4))
+
+
+
+
+
+	if not os.path.isfile(filebase + "fluxes_2000.txt"):
+		# ------------------- Change CO2 concentration - 2000ppm -----------------------
+		state['mole_fraction_of_carbon_dioxide_in_air'].values = state['mole_fraction_of_carbon_dioxide_in_air'].values*6.06060606
+
+		# Calc perturbed fluxes
+		swtendencies, swdiagnostics = swradiation(state)
+		lwtendencies, lwdiagnostics = lwradiation(state)
+
+		swup_2000 = np.array(swdiagnostics['upwelling_shortwave_flux_in_air'])
+		swdown_2000 = np.array(swdiagnostics['downwelling_shortwave_flux_in_air'])
+		lwup_2000 = np.array(lwdiagnostics['upwelling_longwave_flux_in_air'])
+		lwdown_2000 = np.array(lwdiagnostics['downwelling_longwave_flux_in_air'])
+
+
+		# prepare data to save to file
+		swup_2000_data = np.reshape(swup_2000,42)*0.965529262*0.501472063
+		swdown_2000_data = np.reshape(swdown_2000, 42)*0.965529262*0.501472063
+		lwup_2000_data = np.reshape(lwup_2000,42)
+		lwdown_2000_data = np.reshape(lwdown_2000,42)
+
+		net_flux_2000 = swdown_2000_data + lwdown_2000_data - swup_2000_data - lwup_2000_data - net_flux_330
+		net_flux_2000_data = np.reshape(net_flux_2000,42)
+
+		with open(filebase + "fluxes_2000.txt", 'w+') as datafile_id:
+			datafile_id.write(json.dumps({'pressure':c5_pressure, 'sw_up':swup_2000_data, 'sw_dn':swdown_2000_data, 'lw_up':lwup_2000_data, 'lw_dn':lwdown_2000_data}, default=lambda x: list(x), indent=4))
+
+
+
+
+	if not os.path.isfile(filebase + "fluxes_5000.txt"):
+		# ------------------------- Change CO2 concentration - 5000ppm -----------------------
+		state['mole_fraction_of_carbon_dioxide_in_air'].values = state['mole_fraction_of_carbon_dioxide_in_air'].values*15.1515152
+
+		# Calc perturbed fluxes
+		swtendencies, swdiagnostics = swradiation(state)
+		lwtendencies, lwdiagnostics = lwradiation(state)
+
+		swup_5000 = np.array(swdiagnostics['upwelling_shortwave_flux_in_air'])
+		swdown_5000 = np.array(swdiagnostics['downwelling_shortwave_flux_in_air'])
+		lwup_5000 = np.array(lwdiagnostics['upwelling_longwave_flux_in_air'])
+		lwdown_5000 = np.array(lwdiagnostics['downwelling_longwave_flux_in_air'])
+
+
+		# prepare data to save to file
+		swup_5000_data = np.reshape(swup_5000,42)*0.965529262*0.501472063
+		swdown_5000_data = np.reshape(swdown_5000, 42)*0.965529262*0.501472063
+		lwup_5000_data = np.reshape(lwup_5000,42)
+		lwdown_5000_data = np.reshape(lwdown_5000,42)
+
+		net_flux_5000 = swdown_5000_data + lwdown_5000_data - swup_5000_data - lwup_5000_data - net_flux_330
+		net_flux_5000_data = np.reshape(net_flux_5000,42)
+
+
+		with open(filebase + "fluxes_5000.txt", 'w+') as datafile_id:
+			datafile_id.write(json.dumps({'pressure':c5_pressure, 'sw_up':swup_5000_data, 'sw_dn':swdown_5000_data, 'lw_up':lwup_5000_data, 'lw_dn':lwdown_5000_data}, default=lambda x: list(x), indent=4))
+
+
+
+
+	if not os.path.isfile(filebase + "fluxes_10000.txt"):
+		#  -------------------- Change CO2 concentration - 10000ppm --------------------------
+		state['mole_fraction_of_carbon_dioxide_in_air'].values = state['mole_fraction_of_carbon_dioxide_in_air'].values*30.3030303
+
+		# Calc perturbed fluxes
+		swtendencies, swdiagnostics = swradiation(state)
+		lwtendencies, lwdiagnostics = lwradiation(state)
+
+		swup_10000 = np.array(swdiagnostics['upwelling_shortwave_flux_in_air'])
+		swdown_10000 = np.array(swdiagnostics['downwelling_shortwave_flux_in_air'])
+		lwup_10000 = np.array(lwdiagnostics['upwelling_longwave_flux_in_air'])
+		lwdown_10000 = np.array(lwdiagnostics['downwelling_longwave_flux_in_air'])
+
+
+		# prepare data to save to file
+		swup_10000_data = np.reshape(swup_10000,42)*0.965529262*0.501472063
+		swdown_10000_data = np.reshape(swdown_10000, 42)*0.965529262*0.501472063
+		lwup_10000_data = np.reshape(lwup_10000,42)
+		lwdown_10000_data = np.reshape(lwdown_10000,42)
+
+		net_flux_10000 = swdown_10000_data + lwdown_10000_data - swup_10000_data - lwup_10000_data - net_flux_330
+		net_flux_10000_data = np.reshape(net_flux_10000,42)
+
+
+		with open(filebase + "fluxes_10000.txt", 'w+') as datafile_id:
+			datafile_id.write(json.dumps({'pressure':c5_pressure, 'sw_up':swup_10000_data, 'sw_dn':swdown_10000_data, 'lw_up':lwup_10000_data, 'lw_dn':lwdown_10000_data}, default=lambda x: list(x), indent=4))
+
+
+
+	if not os.path.isfile(filebase + "fluxes_20000.txt"):
+		# ------------------- Change CO2 concentration - 20000ppm --------------------------
+		state['mole_fraction_of_carbon_dioxide_in_air'].values = state['mole_fraction_of_carbon_dioxide_in_air'].values*60.6060606
+
+		# Calc perturbed fluxes
+		swtendencies, swdiagnostics = swradiation(state)
+		lwtendencies, lwdiagnostics = lwradiation(state)
+
+		swup_20000 = np.array(swdiagnostics['upwelling_shortwave_flux_in_air'])
+		swdown_20000 = np.array(swdiagnostics['downwelling_shortwave_flux_in_air'])
+		lwup_20000 = np.array(lwdiagnostics['upwelling_longwave_flux_in_air'])
+		lwdown_20000 = np.array(lwdiagnostics['downwelling_longwave_flux_in_air'])
+
+
+
+		# prepare data to save to file
+		swup_20000_data = np.reshape(swup_20000,42)*0.965529262*0.501472063
+		swdown_20000_data = np.reshape(swdown_20000, 42)*0.965529262*0.501472063
+		lwup_20000_data = np.reshape(lwup_20000,42)
+		lwdown_20000_data = np.reshape(lwdown_20000,42)
+
+		net_flux_20000 = swdown_20000_data + lwdown_20000_data - swup_20000_data - lwup_20000_data - net_flux_330
+		net_flux_20000_data = np.reshape(net_flux_20000,42)
+
+		with open(filebase + "fluxes_20000.txt", 'w+') as datafile_id:
+			datafile_id.write(json.dumps({'pressure':c5_pressure, 'sw_up':swup_20000_data, 'sw_dn':swdown_20000_data, 'lw_up':lwup_20000_data, 'lw_dn':lwdown_20000_data}, default=lambda x: list(x), indent=4))
+
+
+
+	if not os.path.isfile(filebase + "fluxes_30000.txt"):
+		# -------------------- Change CO2 concentration - 30000ppm -------------------------------------
+		state['mole_fraction_of_carbon_dioxide_in_air'].values = state['mole_fraction_of_carbon_dioxide_in_air'].values*90.9090909
+
+		# Calc perturbed fluxes
+		swtendencies, swdiagnostics = swradiation(state)
+		lwtendencies, lwdiagnostics = lwradiation(state)
+
+		swup_30000 = np.array(swdiagnostics['upwelling_shortwave_flux_in_air'])
+		swdown_30000 = np.array(swdiagnostics['downwelling_shortwave_flux_in_air'])
+		lwup_30000 = np.array(lwdiagnostics['upwelling_longwave_flux_in_air'])
+		lwdown_30000 = np.array(lwdiagnostics['downwelling_longwave_flux_in_air'])
+
+
+
+		# prepare data to save to file
+		swup_30000_data = np.reshape(swup_30000,42)*0.965529262*0.501472063
+		swdown_30000_data = np.reshape(swdown_30000, 42)*0.965529262*0.501472063
+		lwup_30000_data = np.reshape(lwup_30000,42)
+		lwdown_30000_data = np.reshape(lwdown_30000,42)
+
+		net_flux_30000 = swdown_30000_data + lwdown_30000_data - swup_30000_data - lwup_30000_data - net_flux_330
+		net_flux_30000_data = np.reshape(net_flux_30000,42)
+
+		with open(filebase + "fluxes_30000.txt", 'w+') as datafile_id:
+			datafile_id.write(json.dumps({'pressure':c5_pressure, 'sw_up':swup_30000_data, 'sw_dn':swdown_30000_data, 'lw_up':lwup_30000_data, 'lw_dn':lwdown_30000_data}, default=lambda x: list(x), indent=4))
+
+
+
+
+
+	if not os.path.isfile(filebase + "fluxes_35000.txt"):
+		# Change CO2 concentration - 35000ppm
+		state['mole_fraction_of_carbon_dioxide_in_air'].values = state['mole_fraction_of_carbon_dioxide_in_air'].values*106.060606
+
+		# Calc perturbed fluxes
+		swtendencies, swdiagnostics = swradiation(state)
+		lwtendencies, lwdiagnostics = lwradiation(state)
+
+		swup_35000 = np.array(swdiagnostics['upwelling_shortwave_flux_in_air'])
+		swdown_35000 = np.array(swdiagnostics['downwelling_shortwave_flux_in_air'])
+		lwup_35000 = np.array(lwdiagnostics['upwelling_longwave_flux_in_air'])
+		lwdown_35000 = np.array(lwdiagnostics['downwelling_longwave_flux_in_air'])
+
+
+		# prepare data to save to file
+		swup_35000_data = np.reshape(swup_35000,42)*0.965529262*0.501472063
+		swdown_35000_data = np.reshape(swdown_35000, 42)*0.965529262*0.501472063
+		lwup_35000_data = np.reshape(lwup_35000,42)
+		lwdown_35000_data = np.reshape(lwdown_35000,42)
+
+		net_flux_35000 = swdown_35000_data + lwdown_35000_data - swup_35000_data - lwup_35000_data - net_flux_330
+		net_flux_35000_data = np.reshape(net_flux_35000,42)
+
+		with open(filebase + "fluxes_35000.txt", 'w+') as datafile_id:
+			datafile_id.write(json.dumps({'pressure':c5_pressure, 'sw_up':swup_35000_data, 'sw_dn':swdown_35000_data, 'lw_up':lwup_35000_data, 'lw_dn':lwdown_35000_data}, default=lambda x: list(x), indent=4))
+	
+
+# -------------------------------------------------------------------------------
+# This function calculates the net surface, 200hPa, and top of atmosphere (TOA)
+# radiative forcing for CAM5. CAM4, and the SMART line by line model, for Extended
+# Data Figure 3.
+# -------------------------------------------------------------------------------
+def calculate_rad_fluxes(filebase):
+	cam5_filebase = filebase + 'CAM5/'
+	cam3_filebase = filebase + 'CAM3/'
+	smart_filebase = filebase + 'SMART/'
+
+	generate_fluxes_cam5(cam5_filebase)
+
+	#--------------------------------------------------------
+	# CAM5
+	#--------------------------------------------------------
+
+	# Read in fluxes
+	# ------ 330
+	cam5_infile = cam5_filebase + 'fluxes_330.txt'
+	ds = json.load(open(cam5_infile))
+
+	c5lwup_330 = np.asarray(ds['lw_up'])
+	c5lwdn_330 = np.asarray(ds['lw_dn'])
+	c5swup_330 = np.asarray(ds['sw_up'])
+	c5swdn_330 = np.asarray(ds['sw_dn'])
+
+	c5_total_flux_330 = c5swup_330*(-1) + c5swdn_330 - c5lwup_330 + c5lwdn_330
+
+
+	# ------ 100
+	cam5_infile = cam5_filebase + 'fluxes_100.txt'
+	ds = json.load(open(cam5_infile))
+
+	c5lwup_100 = np.asarray(ds['lw_up'])
+	c5lwdn_100 = np.asarray(ds['lw_dn'])
+	c5swup_100 = np.asarray(ds['sw_up'])
+	c5swdn_100 = np.asarray(ds['sw_dn'])
+
+	c5_total_flux_100 = c5swup_100*(-1) + c5swdn_100 - c5lwup_100 + c5lwdn_100 - c5_total_flux_330
+
+
+
+	# ------ 500
+	cam5_infile = cam5_filebase + 'fluxes_500.txt'
+	ds = json.load(open(cam5_infile))
+
+	c5lwup_500 = np.asarray(ds['lw_up'])
+	c5lwdn_500 = np.asarray(ds['lw_dn'])
+	c5swup_500 = np.asarray(ds['sw_up'])
+	c5swdn_500 = np.asarray(ds['sw_dn'])
+
+	c5_total_flux_500 = c5swup_500*(-1) + c5swdn_500 - c5lwup_500 + c5lwdn_500 - c5_total_flux_330
+
+
+	# ------ 1000
+	cam5_infile = cam5_filebase + 'fluxes_1000.txt'
+	ds = json.load(open(cam5_infile))
+
+	c5lwup_1000 = np.asarray(ds['lw_up'])
+	c5lwdn_1000 = np.asarray(ds['lw_dn'])
+	c5swup_1000 = np.asarray(ds['sw_up'])
+	c5swdn_1000 = np.asarray(ds['sw_dn'])
+
+	c5_total_flux_1000 = c5swup_1000*(-1) + c5swdn_1000 - c5lwup_1000 + c5lwdn_1000 - c5_total_flux_330
+
+
+	# ------ 1500
+	cam5_infile = cam5_filebase + 'fluxes_1500.txt'
+	ds = json.load(open(cam5_infile))
+
+	c5lwup_1500 = np.asarray(ds['lw_up'])
+	c5lwdn_1500 = np.asarray(ds['lw_dn'])
+	c5swup_1500 = np.asarray(ds['sw_up'])
+	c5swdn_1500 = np.asarray(ds['sw_dn'])
+
+	c5_total_flux_1500 = c5swup_1500*(-1) + c5swdn_1500 - c5lwup_1500 + c5lwdn_1500 - c5_total_flux_330
+
+
+	# ------ 2000
+	cam5_infile = cam5_filebase + 'fluxes_2000.txt'
+	ds = json.load(open(cam5_infile))
+
+	c5lwup_2000 = np.asarray(ds['lw_up'])
+	c5lwdn_2000 = np.asarray(ds['lw_dn'])
+	c5swup_2000 = np.asarray(ds['sw_up'])
+	c5swdn_2000 = np.asarray(ds['sw_dn'])
+
+	c5_total_flux_2000 = c5swup_2000*(-1) + c5swdn_2000 - c5lwup_2000 + c5lwdn_2000 - c5_total_flux_330
+
+
+	# ------ 5000
+	cam5_infile = cam5_filebase + 'fluxes_5000.txt'
+	ds = json.load(open(cam5_infile))
+
+	c5lwup_5000 = np.asarray(ds['lw_up'])
+	c5lwdn_5000 = np.asarray(ds['lw_dn'])
+	c5swup_5000 = np.asarray(ds['sw_up'])
+	c5swdn_5000 = np.asarray(ds['sw_dn'])
+
+	c5_total_flux_5000 = c5swup_5000*(-1) + c5swdn_5000 - c5lwup_5000 + c5lwdn_5000 - c5_total_flux_330
+
+
+	# ------ 10000
+	cam5_infile = cam5_filebase + 'fluxes_10000.txt'
+	ds = json.load(open(cam5_infile))
+
+	c5lwup_10000 = np.asarray(ds['lw_up'])
+	c5lwdn_10000 = np.asarray(ds['lw_dn'])
+	c5swup_10000 = np.asarray(ds['sw_up'])
+	c5swdn_10000 = np.asarray(ds['sw_dn'])
+
+	c5_total_flux_10000 = c5swup_10000*(-1) + c5swdn_10000 - c5lwup_10000 + c5lwdn_10000 - c5_total_flux_330
+
+
+	# ------ 20000
+	cam5_infile = cam5_filebase + 'fluxes_20000.txt'
+	ds = json.load(open(cam5_infile))
+
+	c5lwup_20000 = np.asarray(ds['lw_up'])
+	c5lwdn_20000 = np.asarray(ds['lw_dn'])
+	c5swup_20000 = np.asarray(ds['sw_up'])
+	c5swdn_20000 = np.asarray(ds['sw_dn'])
+
+	c5_total_flux_20000 = c5swup_20000*(-1) + c5swdn_20000 - c5lwup_20000 + c5lwdn_20000 - c5_total_flux_330
+
+
+	# ------ 30000
+	cam5_infile = cam5_filebase + 'fluxes_30000.txt'
+	ds = json.load(open(cam5_infile))
+
+	c5lwup_30000 = np.asarray(ds['lw_up'])
+	c5lwdn_30000 = np.asarray(ds['lw_dn'])
+	c5swup_30000 = np.asarray(ds['sw_up'])
+	c5swdn_30000 = np.asarray(ds['sw_dn'])
+
+	c5_total_flux_30000 = c5swup_30000*(-1) + c5swdn_30000 - c5lwup_30000 + c5lwdn_30000 - c5_total_flux_330
+
+
+	# ------ 35000
+	cam5_infile = cam5_filebase + 'fluxes_35000.txt'
+	ds = json.load(open(cam5_infile))
+
+	c5lwup_35000 = np.asarray(ds['lw_up'])
+	c5lwdn_35000 = np.asarray(ds['lw_dn'])
+	c5swup_35000 = np.asarray(ds['sw_up'])
+	c5swdn_35000 = np.asarray(ds['sw_dn'])
+
+	c5_total_flux_35000 = c5swup_35000*(-1) + c5swdn_35000 - c5lwup_35000 + c5lwdn_35000 - c5_total_flux_330
+
+
+
+
+
+	#--------------------------------------------------------
+	# CAM3
+	#--------------------------------------------------------
+
+	# ------ 330
+	cam3_infile_330 = cam3_filebase + 'CliMT_CAM3_1D_330.0ppmvCO2_1842ppbvCH4_328ppbvN2O_42levels.nc'
+	ds = netCDF4.Dataset(cam3_infile_330)
+	
+	cam3_flux_330_srf = ds.variables['FSWNETSRF'][:]*1.630705885*0.501472063 + ds.variables['FLWNETSRF'][:]
+	cam3_flux_330_200hpa = ds.variables['FSWNET'][19]*1.630705885*0.501472063 + ds.variables['FLWNET'][19]
+	cam3_flux_330_toa = ds.variables['FSWNETTOA'][:]*1.630705885*0.501472063 + ds.variables['FLWNETTOA'][:]
+
+	cam3_pressure = ds.variables['Pres'][:]
+
+	# ------ 100
+	cam3_infile_100 = cam3_filebase + 'CliMT_CAM3_1D_100.0ppmvCO2_1842ppbvCH4_328ppbvN2O_42levels.nc'
+	ds = netCDF4.Dataset(cam3_infile_100)
+	
+	cam3_flux_100_srf = ds.variables['FSWNETSRF'][:]*1.630705885*0.501472063 + ds.variables['FLWNETSRF'][:] - cam3_flux_330_srf
+	cam3_flux_100_200hpa = ds.variables['FSWNET'][19]*1.630705885*0.501472063 + ds.variables['FLWNET'][19] - cam3_flux_330_200hpa
+	cam3_flux_100_toa = ds.variables['FSWNETTOA'][:]*1.630705885*0.501472063 + ds.variables['FLWNETTOA'][:] - cam3_flux_330_toa
+
+	# ------ 500
+	cam3_infile_500 = cam3_filebase + 'CliMT_CAM3_1D_500.0ppmvCO2_1842ppbvCH4_328ppbvN2O_42levels.nc'
+	ds = netCDF4.Dataset(cam3_infile_500)
+	
+	cam3_flux_500_srf = ds.variables['FSWNETSRF'][:]*1.630705885*0.501472063 + ds.variables['FLWNETSRF'][:] - cam3_flux_330_srf
+	cam3_flux_500_200hpa = ds.variables['FSWNET'][19]*1.630705885*0.501472063 + ds.variables['FLWNET'][19] - cam3_flux_330_200hpa
+	cam3_flux_500_toa = ds.variables['FSWNETTOA'][:]*1.630705885*0.501472063 + ds.variables['FLWNETTOA'][:] - cam3_flux_330_toa
+
+	# ------ 1000
+	cam3_infile_1000 = cam3_filebase + 'CliMT_CAM3_1D_1000.0ppmvCO2_1842ppbvCH4_328ppbvN2O_42levels.nc'
+	ds = netCDF4.Dataset(cam3_infile_1000)
+	
+	cam3_flux_1000_srf = ds.variables['FSWNETSRF'][:]*1.630705885*0.501472063 + ds.variables['FLWNETSRF'][:] - cam3_flux_330_srf
+	cam3_flux_1000_200hpa = ds.variables['FSWNET'][19]*1.630705885*0.501472063 + ds.variables['FLWNET'][19] - cam3_flux_330_200hpa
+	cam3_flux_1000_toa = ds.variables['FSWNETTOA'][:]*1.630705885*0.501472063 + ds.variables['FLWNETTOA'][:] - cam3_flux_330_toa
+
+
+	# ------ 2000
+	cam3_infile_2000 = cam3_filebase + 'CliMT_CAM3_1D_2000.0ppmvCO2_1842ppbvCH4_328ppbvN2O_42levels.nc'
+	ds = netCDF4.Dataset(cam3_infile_2000)
+	
+	cam3_flux_2000_srf = ds.variables['FSWNETSRF'][:]*1.630705885*0.501472063 + ds.variables['FLWNETSRF'][:] - cam3_flux_330_srf
+	cam3_flux_2000_200hpa = ds.variables['FSWNET'][19]*1.630705885*0.501472063 + ds.variables['FLWNET'][19] - cam3_flux_330_200hpa
+	cam3_flux_2000_toa = ds.variables['FSWNETTOA'][:]*1.630705885*0.501472063 + ds.variables['FLWNETTOA'][:] - cam3_flux_330_toa
+
+
+	# ------ 5000
+	cam3_infile_5000 = cam3_filebase + 'CliMT_CAM3_1D_5000.0ppmvCO2_1842ppbvCH4_328ppbvN2O_42levels.nc'
+	ds = netCDF4.Dataset(cam3_infile_5000)
+	
+	cam3_flux_5000_srf = ds.variables['FSWNETSRF'][:]*1.630705885*0.501472063 + ds.variables['FLWNETSRF'][:] - cam3_flux_330_srf
+	cam3_flux_5000_200hpa = ds.variables['FSWNET'][19]*1.630705885*0.501472063 + ds.variables['FLWNET'][19] - cam3_flux_330_200hpa
+	cam3_flux_5000_toa = ds.variables['FSWNETTOA'][:]*1.630705885*0.501472063 + ds.variables['FLWNETTOA'][:] - cam3_flux_330_toa
+
+
+	# ------ 10000
+	cam3_infile_10000 = cam3_filebase + 'CliMT_CAM3_1D_10000.0ppmvCO2_1842ppbvCH4_328ppbvN2O_42levels.nc'
+	ds = netCDF4.Dataset(cam3_infile_10000)
+	
+	cam3_flux_10000_srf = ds.variables['FSWNETSRF'][:]*1.630705885*0.501472063 + ds.variables['FLWNETSRF'][:] - cam3_flux_330_srf
+	cam3_flux_10000_200hpa = ds.variables['FSWNET'][19]*1.630705885*0.501472063 + ds.variables['FLWNET'][19] - cam3_flux_330_200hpa
+	cam3_flux_10000_toa = ds.variables['FSWNETTOA'][:]*1.630705885*0.501472063 + ds.variables['FLWNETTOA'][:] - cam3_flux_330_toa
+
+
+	# ------ 20000
+	cam3_infile_20000 = cam3_filebase + 'CliMT_CAM3_1D_20000.0ppmvCO2_1842ppbvCH4_328ppbvN2O_42levels.nc'
+	ds = netCDF4.Dataset(cam3_infile_20000)
+	
+	cam3_flux_20000_srf = ds.variables['FSWNETSRF'][:]*1.630705885*0.501472063 + ds.variables['FLWNETSRF'][:] - cam3_flux_330_srf
+	cam3_flux_20000_200hpa = ds.variables['FSWNET'][19]*1.630705885*0.501472063 + ds.variables['FLWNET'][19] - cam3_flux_330_200hpa
+	cam3_flux_20000_toa = ds.variables['FSWNETTOA'][:]*1.630705885*0.501472063 + ds.variables['FLWNETTOA'][:] - cam3_flux_330_toa
+
+
+	# ------ 30000
+	cam3_infile_30000 = cam3_filebase + 'CliMT_CAM3_1D_30000.0ppmvCO2_1842ppbvCH4_328ppbvN2O_42levels.nc'
+	ds = netCDF4.Dataset(cam3_infile_30000)
+	
+	cam3_flux_30000_srf = ds.variables['FSWNETSRF'][:]*1.630705885*0.501472063 + ds.variables['FLWNETSRF'][:] - cam3_flux_330_srf
+	cam3_flux_30000_200hpa = ds.variables['FSWNET'][19]*1.630705885*0.501472063 + ds.variables['FLWNET'][19] - cam3_flux_330_200hpa
+	cam3_flux_30000_toa = ds.variables['FSWNETTOA'][:]*1.630705885*0.501472063 + ds.variables['FLWNETTOA'][:] - cam3_flux_330_toa
+
+
+	# ------ 35000
+	cam3_infile_35000 = cam3_filebase + 'CliMT_CAM3_1D_35000.0ppmvCO2_1842ppbvCH4_328ppbvN2O_42levels.nc'
+	ds = netCDF4.Dataset(cam3_infile_35000)
+	
+	cam3_flux_35000_srf = ds.variables['FSWNETSRF'][:]*1.630705885*0.501472063 + ds.variables['FLWNETSRF'][:] - cam3_flux_330_srf
+	cam3_flux_35000_200hpa = ds.variables['FSWNET'][19]*1.630705885*0.501472063 + ds.variables['FLWNET'][19] - cam3_flux_330_200hpa
+	cam3_flux_35000_toa = ds.variables['FSWNETTOA'][:]*1.630705885*0.501472063 + ds.variables['FLWNETTOA'][:] - cam3_flux_330_toa
+
+
+
+
+	#--------------------------------------------------------
+	# SMART
+	#--------------------------------------------------------
+
+	# ------ Read in fluxes 330
+	smart_infile = smart_filebase + 'fys_co2_330.txt'
+	dtype2 = np.dtype([('Pressure_hrt','f8'),('Temperature','f8'),('Altitude','f8'),('solarq','f8'),('thermalq','f8'),('dirsolarflux','f8'),('dnsolarflx','f8'),('upsolarflx','f8'),('dnthermalflx','f8'),('upthermalflx','f8'),('pflux','f8'),('tflux','f8')])
+
+	hrt_profile = np.loadtxt(smart_infile, dtype=dtype2, skiprows=1)
+	sw_down_hrt = np.array(hrt_profile['dnsolarflx']) + np.array(hrt_profile['dirsolarflux'])
+
+	# calc total fluxes 330
+	smart_flux_330 = np.array(hrt_profile['dnthermalflx']) - np.array(hrt_profile['upthermalflx']) + sw_down_hrt*0.501472063 - np.array(hrt_profile['upsolarflx'])*0.501472063
+
+
+	# ------ Read in fluxes 100
+	smart_infile = smart_filebase + 'fys_co2_100.txt'
+	dtype2 = np.dtype([('Pressure_hrt','f8'),('Temperature','f8'),('Altitude','f8'),('solarq','f8'),('thermalq','f8'),('dirsolarflux','f8'),('dnsolarflx','f8'),('upsolarflx','f8'),('dnthermalflx','f8'),('upthermalflx','f8'),('pflux','f8'),('tflux','f8')])
+
+	hrt_profile = np.loadtxt(smart_infile, dtype=dtype2, skiprows=1)
+	sw_down_hrt = np.array(hrt_profile['dnsolarflx']) + np.array(hrt_profile['dirsolarflux'])
+
+	# calc total fluxes 100
+	smart_flux_100 = np.array(hrt_profile['dnthermalflx']) - np.array(hrt_profile['upthermalflx']) + sw_down_hrt*0.501472063 - np.array(hrt_profile['upsolarflx'])*0.501472063 - smart_flux_330
+
+
+	# ------ Read in fluxes 500
+	smart_infile = smart_filebase + 'fys_co2_500.txt'
+	dtype2 = np.dtype([('Pressure_hrt','f8'),('Temperature','f8'),('Altitude','f8'),('solarq','f8'),('thermalq','f8'),('dirsolarflux','f8'),('dnsolarflx','f8'),('upsolarflx','f8'),('dnthermalflx','f8'),('upthermalflx','f8'),('pflux','f8'),('tflux','f8')])
+
+	hrt_profile = np.loadtxt(smart_infile, dtype=dtype2, skiprows=1)
+	sw_down_hrt = np.array(hrt_profile['dnsolarflx']) + np.array(hrt_profile['dirsolarflux'])
+
+	# calc total fluxes 500
+	smart_flux_500 = np.array(hrt_profile['dnthermalflx']) - np.array(hrt_profile['upthermalflx']) + sw_down_hrt*0.501472063 - np.array(hrt_profile['upsolarflx'])*0.501472063 - smart_flux_330
+
+	# ------ Read in fluxes 1000
+	smart_infile = smart_filebase + 'fys_co2_1000.txt'
+	dtype2 = np.dtype([('Pressure_hrt','f8'),('Temperature','f8'),('Altitude','f8'),('solarq','f8'),('thermalq','f8'),('dirsolarflux','f8'),('dnsolarflx','f8'),('upsolarflx','f8'),('dnthermalflx','f8'),('upthermalflx','f8'),('pflux','f8'),('tflux','f8')])
+
+	hrt_profile = np.loadtxt(smart_infile, dtype=dtype2, skiprows=1)
+	sw_down_hrt = np.array(hrt_profile['dnsolarflx']) + np.array(hrt_profile['dirsolarflux'])
+
+	# calc total fluxes 1000
+	smart_flux_1000 = np.array(hrt_profile['dnthermalflx']) - np.array(hrt_profile['upthermalflx']) + sw_down_hrt*0.501472063 - np.array(hrt_profile['upsolarflx'])*0.501472063 - smart_flux_330
+
+	# ------ Read in fluxes 1500
+	smart_infile = smart_filebase + 'fys_co2_1500.txt'
+	dtype2 = np.dtype([('Pressure_hrt','f8'),('Temperature','f8'),('Altitude','f8'),('solarq','f8'),('thermalq','f8'),('dirsolarflux','f8'),('dnsolarflx','f8'),('upsolarflx','f8'),('dnthermalflx','f8'),('upthermalflx','f8'),('pflux','f8'),('tflux','f8')])
+
+	hrt_profile = np.loadtxt(smart_infile, dtype=dtype2, skiprows=1)
+	sw_down_hrt = np.array(hrt_profile['dnsolarflx']) + np.array(hrt_profile['dirsolarflux'])
+
+	# calc total fluxes 1500
+	smart_flux_1500 = np.array(hrt_profile['dnthermalflx']) - np.array(hrt_profile['upthermalflx']) + sw_down_hrt*0.501472063 - np.array(hrt_profile['upsolarflx'])*0.501472063 - smart_flux_330
+
+
+	# ------ Read in fluxes 2000
+	smart_infile = smart_filebase + 'fys_co2_2000.txt'
+	dtype2 = np.dtype([('Pressure_hrt','f8'),('Temperature','f8'),('Altitude','f8'),('solarq','f8'),('thermalq','f8'),('dirsolarflux','f8'),('dnsolarflx','f8'),('upsolarflx','f8'),('dnthermalflx','f8'),('upthermalflx','f8'),('pflux','f8'),('tflux','f8')])
+
+	hrt_profile = np.loadtxt(smart_infile, dtype=dtype2, skiprows=1)
+	sw_down_hrt = np.array(hrt_profile['dnsolarflx']) + np.array(hrt_profile['dirsolarflux'])
+
+	# calc total fluxes 2000
+	smart_flux_2000 = np.array(hrt_profile['dnthermalflx']) - np.array(hrt_profile['upthermalflx']) + sw_down_hrt*0.501472063 - np.array(hrt_profile['upsolarflx'])*0.501472063 - smart_flux_330
+
+
+	# ------ Read in fluxes 5000
+	smart_infile = smart_filebase + 'fys_co2_5000.txt'
+	dtype2 = np.dtype([('Pressure_hrt','f8'),('Temperature','f8'),('Altitude','f8'),('solarq','f8'),('thermalq','f8'),('dirsolarflux','f8'),('dnsolarflx','f8'),('upsolarflx','f8'),('dnthermalflx','f8'),('upthermalflx','f8'),('pflux','f8'),('tflux','f8')])
+
+	hrt_profile = np.loadtxt(smart_infile, dtype=dtype2, skiprows=1)
+	sw_down_hrt = np.array(hrt_profile['dnsolarflx']) + np.array(hrt_profile['dirsolarflux'])
+
+	# calc total fluxes 5000
+	smart_flux_5000 = np.array(hrt_profile['dnthermalflx']) - np.array(hrt_profile['upthermalflx']) + sw_down_hrt*0.501472063 - np.array(hrt_profile['upsolarflx'])*0.501472063 - smart_flux_330
+
+
+	# ------ Read in fluxes 10000
+	smart_infile = smart_filebase + 'fys_co2_10000.txt'
+	dtype2 = np.dtype([('Pressure_hrt','f8'),('Temperature','f8'),('Altitude','f8'),('solarq','f8'),('thermalq','f8'),('dirsolarflux','f8'),('dnsolarflx','f8'),('upsolarflx','f8'),('dnthermalflx','f8'),('upthermalflx','f8'),('pflux','f8'),('tflux','f8')])
+
+	hrt_profile = np.loadtxt(smart_infile, dtype=dtype2, skiprows=1)
+	sw_down_hrt = np.array(hrt_profile['dnsolarflx']) + np.array(hrt_profile['dirsolarflux'])
+
+	# calc total fluxes 10000
+	smart_flux_10000 = np.array(hrt_profile['dnthermalflx']) - np.array(hrt_profile['upthermalflx']) + sw_down_hrt*0.501472063 - np.array(hrt_profile['upsolarflx'])*0.501472063 - smart_flux_330
+
+
+	# ------ Read in fluxes 20000
+	smart_infile = smart_filebase + 'fys_co2_20000.txt'
+	dtype2 = np.dtype([('Pressure_hrt','f8'),('Temperature','f8'),('Altitude','f8'),('solarq','f8'),('thermalq','f8'),('dirsolarflux','f8'),('dnsolarflx','f8'),('upsolarflx','f8'),('dnthermalflx','f8'),('upthermalflx','f8'),('pflux','f8'),('tflux','f8')])
+
+	hrt_profile = np.loadtxt(smart_infile, dtype=dtype2, skiprows=1)
+	sw_down_hrt = np.array(hrt_profile['dnsolarflx']) + np.array(hrt_profile['dirsolarflux'])
+
+	# calc total fluxes 20000
+	smart_flux_20000 = np.array(hrt_profile['dnthermalflx']) - np.array(hrt_profile['upthermalflx']) + sw_down_hrt*0.501472063 - np.array(hrt_profile['upsolarflx'])*0.501472063 - smart_flux_330
+
+	# ------ Read in fluxes 30000
+	smart_infile = smart_filebase + 'fys_co2_30000.txt'
+	dtype2 = np.dtype([('Pressure_hrt','f8'),('Temperature','f8'),('Altitude','f8'),('solarq','f8'),('thermalq','f8'),('dirsolarflux','f8'),('dnsolarflx','f8'),('upsolarflx','f8'),('dnthermalflx','f8'),('upthermalflx','f8'),('pflux','f8'),('tflux','f8')])
+
+	hrt_profile = np.loadtxt(smart_infile, dtype=dtype2, skiprows=1)	
+	sw_down_hrt = np.array(hrt_profile['dnsolarflx']) + np.array(hrt_profile['dirsolarflux'])	
+
+	# calc total fluxes 30000
+	smart_flux_30000 = np.array(hrt_profile['dnthermalflx']) - np.array(hrt_profile['upthermalflx']) + sw_down_hrt*0.501472063 - np.array(hrt_profile['upsolarflx'])*0.501472063 - smart_flux_330
+
+
+	# ------ Read in fluxes 35000
+	smart_infile = smart_filebase + 'fys_co2_35000.txt'
+	dtype2 = np.dtype([('Pressure_hrt','f8'),('Temperature','f8'),('Altitude','f8'),('solarq','f8'),('thermalq','f8'),('dirsolarflux','f8'),('dnsolarflx','f8'),('upsolarflx','f8'),('dnthermalflx','f8'),('upthermalflx','f8'),('pflux','f8'),('tflux','f8')])
+
+	hrt_profile = np.loadtxt(smart_infile, dtype=dtype2, skiprows=1)
+	sw_down_hrt = np.array(hrt_profile['dnsolarflx']) + np.array(hrt_profile['dirsolarflux'])
+
+	# calc total fluxes 35000
+	smart_flux_35000 = np.array(hrt_profile['dnthermalflx']) - np.array(hrt_profile['upthermalflx']) + sw_down_hrt*0.501472063 - np.array(hrt_profile['upsolarflx'])*0.501472063 - smart_flux_330
+
+
+	# ------------------ Organize data for plotting -----------
+
+	# CAM5
+	fluxes_cam5_srf = np.array([np.reshape(c5_total_flux_100, 42)[0], np.reshape(c5_total_flux_330, 42)[0] - np.reshape(c5_total_flux_330, 42)[0], np.reshape(c5_total_flux_500, 42)[0], np.reshape(c5_total_flux_1000, 42)[0],np.reshape(c5_total_flux_1500, 42)[0], np.reshape(c5_total_flux_2000, 42)[0], np.reshape(c5_total_flux_5000, 42)[0], np.reshape(c5_total_flux_10000, 42)[0],np.reshape(c5_total_flux_20000, 42)[0], np.reshape(c5_total_flux_30000, 42)[0], np.reshape(c5_total_flux_35000, 42)[0]])
+	fluxes_cam5_200hpa = np.array([np.reshape(c5_total_flux_100, 42)[23], np.reshape(c5_total_flux_330, 42)[23] - np.reshape(c5_total_flux_330, 42)[23], np.reshape(c5_total_flux_500, 42)[23], np.reshape(c5_total_flux_1000, 42)[23],np.reshape(c5_total_flux_1500, 42)[23], np.reshape(c5_total_flux_2000, 42)[23], np.reshape(c5_total_flux_5000, 42)[23], np.reshape(c5_total_flux_10000, 42)[23],np.reshape(c5_total_flux_20000, 42)[23], np.reshape(c5_total_flux_30000, 42)[23], np.reshape(c5_total_flux_35000, 42)[23]])
+	fluxes_cam5_toa = np.array([np.reshape(c5_total_flux_100, 42)[41], np.reshape(c5_total_flux_330, 42)[41] - np.reshape(c5_total_flux_330, 42)[41], np.reshape(c5_total_flux_500, 42)[41], np.reshape(c5_total_flux_1000, 42)[41],np.reshape(c5_total_flux_1500, 42)[41], np.reshape(c5_total_flux_2000, 42)[41], np.reshape(c5_total_flux_5000, 42)[41], np.reshape(c5_total_flux_10000, 42)[41],np.reshape(c5_total_flux_20000, 42)[41], np.reshape(c5_total_flux_30000, 42)[41], np.reshape(c5_total_flux_35000, 42)[41]])
+
+
+	# CAM3
+	fluxes_cam3_srf = np.array([cam3_flux_100_srf, cam3_flux_330_srf - cam3_flux_330_srf, cam3_flux_500_srf, cam3_flux_1000_srf, cam3_flux_2000_srf, cam3_flux_5000_srf, cam3_flux_10000_srf, cam3_flux_20000_srf, cam3_flux_30000_srf, cam3_flux_35000_srf])
+	fluxes_cam3_200hpa = np.array([cam3_flux_100_200hpa, cam3_flux_330_200hpa - cam3_flux_330_200hpa, cam3_flux_500_200hpa, cam3_flux_1000_200hpa, cam3_flux_2000_200hpa, cam3_flux_5000_200hpa, cam3_flux_10000_200hpa, cam3_flux_20000_200hpa, cam3_flux_30000_200hpa, cam3_flux_35000_200hpa])
+	fluxes_cam3_toa = np.array([cam3_flux_100_toa, cam3_flux_330_toa - cam3_flux_330_toa, cam3_flux_500_toa, cam3_flux_1000_toa, cam3_flux_2000_toa, cam3_flux_5000_toa, cam3_flux_10000_toa, cam3_flux_20000_toa, cam3_flux_30000_toa, cam3_flux_35000_toa])
+
+	
+	# SMART
+	fluxes_smart_srf = np.array([smart_flux_100[39], smart_flux_330[39] - smart_flux_330[39], smart_flux_500[39], smart_flux_1000[39], smart_flux_1500[39], smart_flux_2000[39], smart_flux_5000[39], smart_flux_10000[39], smart_flux_20000[39], smart_flux_30000[39], smart_flux_35000[39]])
+	fluxes_smart_200hpa = np.array([smart_flux_100[10], smart_flux_330[10] - smart_flux_330[10], smart_flux_500[10], smart_flux_1000[10], smart_flux_1500[10], smart_flux_2000[10], smart_flux_5000[10], smart_flux_10000[10], smart_flux_20000[10], smart_flux_30000[10], smart_flux_35000[10]])
+	fluxes_smart_toa = np.array([smart_flux_100[0], smart_flux_330[0] - smart_flux_330[0], smart_flux_500[0], smart_flux_1000[0], smart_flux_1500[0], smart_flux_2000[0], smart_flux_5000[0], smart_flux_10000[0], smart_flux_20000[0], smart_flux_30000[0], smart_flux_35000[0]])
+
+
+	fluxes_all = [fluxes_cam5_srf, fluxes_cam5_200hpa, fluxes_cam5_toa, 
+					fluxes_cam3_srf, fluxes_cam3_200hpa, fluxes_cam3_toa, 
+					fluxes_smart_srf, fluxes_smart_200hpa, fluxes_smart_toa]
+	
+	return(fluxes_all)
+
+
