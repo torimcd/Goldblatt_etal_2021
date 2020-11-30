@@ -111,8 +111,8 @@ for CASENAME in casenames.keys():
 	ts_d = ts_a - ts_p
 
 	#plot the data
-	ax1.plot(lat, ts_a, color=casenames[CASENAME], linewidth=1, rasterized=True)
-	ax2.plot(lat, ts_d, color=casenames[CASENAME], linewidth=1, rasterized=True)
+	ax1.plot(lat, ts_a, color=casenames[CASENAME], linewidth=1, rasterized=False)
+	ax2.plot(lat, ts_d, color=casenames[CASENAME], linewidth=1, rasterized=False)
 
 	# fix axis tick spacing
 	ax1.xaxis.set_major_locator(ticker.MultipleLocator(30))
