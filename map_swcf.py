@@ -22,8 +22,8 @@ download_path = '/home/vmcd/' # enter the path to the directory where you downlo
 filebase = download_path + 'FYSP_clouds_archive/CAM4/'
 outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
 
-current = '0.775'
-cc = '0775'
+current = '1.100'
+cc = '11'
 
 # SWCF fraction variable
 field = 'SWCF'
