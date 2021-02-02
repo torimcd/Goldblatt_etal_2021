@@ -4,7 +4,7 @@
 
 This repository contains the code used to analyze model output and make the figures for Goldblatt et al 2021: 'Earth's Long Term Climate Stabilized by Low Clouds', doi:_________
 
-Model output from this experiment is available and can be downloaded from doi:_________
+Model output from this experiment is available and can be downloaded from https://doi.org/10.20383/101.0308
 
 Code is written in python and makes use of the Climate Data Operators (CDO) version 1.7.0 for processing the model output. For most scripts, CDO is used to extract the variable(s) from the model output, process it by time averaging, selecting a pressure level, or calculating a new variable, and then saves this processed output to a new NetCDF file, which is then plotted using Matplotlib.  
 These processing steps can be time intensive, taking up to ~20 minutes before the figure will be plotted. The processing for Figure 6 and ED Figure 2 may take ~1 hr. Intervening steps will be written to the terminal to track progress. There are certainly lots of ways this could be better optimized.
