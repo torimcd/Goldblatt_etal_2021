@@ -2,7 +2,7 @@
 # Goldblatt_etal_2021
 
 
-This repository contains the code used to analyze model output and make the figures for Goldblatt et al 2021: 'Earth's Long Term Climate Stabilized by Low Clouds', doi:_________
+This repository contains the code used to analyze model output and make the figures for Goldblatt et al 2021: 'Earth's Long Term Climate Stabilized by Low Clouds', https://doi.org/10.1038/s41561-021-00691-7
 
 Model output from this experiment is available and can be downloaded from https://doi.org/10.20383/101.0308
 
