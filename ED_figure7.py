@@ -64,5 +64,5 @@ for row in table_values:
 plt.axis('off')
 
 plt.show()
-fig.savefig("ED_figure7.pdf", format='pdf', bbox_inches='tight')
+fig.savefig("figures_ED/ED_figure7.pdf", format='pdf', bbox_inches='tight')
 

@@ -404,5 +404,5 @@ for p in fields:
 
 plt.show()
 
-fig.savefig("ED_figure2.pdf", format='pdf', bbox_inches='tight')
+fig.savefig("figures_ED/ED_figure2.pdf", format='pdf', bbox_inches='tight')
 

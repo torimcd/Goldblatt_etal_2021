@@ -654,4 +654,4 @@ plt.colorbar(a[3], cax = cax)
 
 plt.show()
 
-fig.savefig("ED_figure6.pdf", bbox_inches='tight')
+fig.savefig("figures_ED/ED_figure6.pdf", bbox_inches='tight')

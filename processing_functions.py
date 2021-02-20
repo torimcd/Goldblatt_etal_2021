@@ -19,8 +19,7 @@ import json
 #-----------------------------------------------------------------------------------------#
 # This file contains functions to process the model output for plotting in the figures
 # accompanying Goldblatt et al 2020. Most of these functions use the Climate Data Operators
-# (CDO) to time average, zonal average, perform mass weighting, etc. is used to prepare the 
-# model output to be plotted on the maps in figure 2
+# (CDO) to time average, zonal average, perform mass weighting, etc.
 #-----------------------------------------------------------------------------------------#
 
 # this sets which cases to process. For speed to recreate the figures from the paper, by default this just
@@ -33,11 +32,11 @@ cases_cam5 = {'09','10'}
 #cases_cam4 = {'07','0725','075','0775','08','0825','085','0875','09','0925','095','0975','10','1025','105','1075','11'}
 #cases_cam5 = {'09','0925','095','0975','10','1025','105'}
 
-#-----------------------------------------------------------------------------------------#
-# This function is used to prepare the model output to be plotted on the maps in figure 2
-#-----------------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------------#
+# This function is used to prepare the model output to be plotted on the maps in figures 2 and 5.
+#-----------------------------------------------------------------------------------------------#
 def map_annual_average(filebase, outloc, cam_version, fields):
-	# This function calculates the annual average for all variables we're mapping in figs 2 and 4 that aren't on a pressure level
+	# This function calculates the annual average for all variables we're mapping in figs 2 and 5 that aren't on a pressure level
 
 	# check whether we're processessing CAM4 or CAM5
 	if cam_version == 'cam4':
@@ -77,7 +76,7 @@ def map_annual_average(filebase, outloc, cam_version, fields):
 
 
 #-----------------------------------------------------------------------------------------#
-# This function is used to prepare the model output to be plotted on the maps in figure 2.
+# This function is used to prepare the model output to be plotted on maps in figure 2.
 # It is essentially performing the same function as map_annual_average except that vertical
 # velocity is on multiple pressure levels, so we need to choose one to plot it on the map.
 # This code selects 700 hPa as the level to plot the vertical velocity
@@ -118,7 +117,7 @@ def map_vert_velocity(filebase, outloc, cam_version):
 
 
 #-----------------------------------------------------------------------------------------#
-# This function is used to prepare the model output to be plotted on the maps in figure 4
+# This function is used to prepare the model output to be plotted on maps in figure 5.
 # It is essentially performing the same function as map_annual_average except that total 
 # water path is calculated for low and high clouds. This function outputs two netCDF files,
 # one for the high waterpath, one for the low waterpath.
@@ -162,12 +161,12 @@ def map_total_waterpath(filebase, outloc, cam_version):
 				os.system(syscall_low)
 
 
-#-----------------------------------------------------------------------------------------#
-# This function is used to calculate Lower Tropospheric Stability (LTS) to be plotted on the 
-# maps in figure 2. LTS is the difference in potential temperature between the suface and 
-# 700 hPa, so we first select the temperature and pressure at 700 hPa, then calculate potential
-# temperature at that level and at the surface, and finally subtract them.
-#-----------------------------------------------------------------------------------------#
+#--------------------------------------------------------------------------------------------------------#
+# This function is used to calculate Lower Tropospheric Stability (LTS) to be plotted on maps in figure 2.
+# LTS is the difference in potential temperature between the suface and 700 hPa, so we first select the
+# temperature and pressure at 700 hPa, then calculate potential temperature at that level and at the 
+# surface, and finally subtract them.
+#--------------------------------------------------------------------------------------------------------#
 def map_prep_lts(filebase, outloc, cam_version):
 	cases_cam4 = {'08','09','10'} # we need the S/S0=0.9 case for these plots
 
@@ -227,12 +226,11 @@ def map_prep_lts(filebase, outloc, cam_version):
 
 
 
-#-----------------------------------------------------------------------------------------#
-# This function is used to calculate Estimated Inversion Strength (EIS) to be plotted on the 
-# maps in figure 2. EIS is calculated using equation 4 from Wood & Bretherton 2006, which 
-# requires calculating the variables necessary to calculate the moist potential temperature 
-# gradient.
-#-----------------------------------------------------------------------------------------#
+#--------------------------------------------------------------------------------------------------------#
+# This function is used to calculate Estimated Inversion Strength (EIS) to be plotted on maps in figure 2. 
+# EIS is calculated using equation 4 from Wood & Bretherton 2006, which requires calculating the 
+# variables necessary to calculate the moist potential temperature gradient.
+#--------------------------------------------------------------------------------------------------------#
 def map_prep_eis(filebase, outloc, cam_version):
 	cases_cam4 = {'08','09','10'} # we need the S/S0=0.9 case for these plots
 	
@@ -305,10 +303,10 @@ def map_prep_eis(filebase, outloc, cam_version):
 
 
 #---------------------------------------------------------------------------------------------#
-# This function is used to prepare the model output to be plotted zonally averaged in figure 3
+# This function is used to prepare the model output to be plotted zonally averaged in figure 3.
 #---------------------------------------------------------------------------------------------#
 def zonal_average(filebase, outloc, cam_version, numfields):
-	# This function calculates the annual average for all variables we're mapping in figs 2 and 4 that aren't on a pressure level
+	# This function calculates the annual average for all variables we're mapping that aren't on a pressure level
 	if numfields == 'all':
 		cases_cam4 = {'07','0725','075','0775', '08','0825','085','0875','09','0925','095','0975','10', '1025', '105', '1075','11'}
 		cases_cam5 = {'09','0925','095','0975','10', '1025', '105'}
@@ -355,7 +353,7 @@ def zonal_average(filebase, outloc, cam_version, numfields):
 
 
 #--------------------------------------------------------------------------#
-# This function calculates the wet bulb potential temperature for figure 3
+# This function calculates the wet bulb potential temperature for figure 3.
 #-------------------------------------------------------------------------#
 def wetbulb_potentialtemp(filebase, outloc, cam_version):
 
@@ -364,7 +362,7 @@ def wetbulb_potentialtemp(filebase, outloc, cam_version):
 
 #--------------------------------------------------------------------------#
 # This function prepares the variables needed to calculate wet bulb potential
-# temperature for figure 3
+# temperature for figure 3.
 #-------------------------------------------------------------------------#
 def wbpt_prep(filebase, outloc, cam_version):
 	# check whether we're processessing CAM4 or CAM5
@@ -406,7 +404,7 @@ def wbpt_prep(filebase, outloc, cam_version):
 
 
 #-----------------------------------------------------------------------------------------#
-# This function is used to prepare the model output to be plotted on the maps in figure 5
+# This function is used to prepare the model output to be plotted on maps in figure 6.
 #-----------------------------------------------------------------------------------------#
 def cloud_forcing_all(filebase, outloc, fields, cam_version):
 
@@ -452,10 +450,10 @@ def cloud_forcing_all(filebase, outloc, fields, cam_version):
 
 
 
-#-----------------------------------------------------------------------------------------#
-# This function is used to prepare the model output to be plotted in figure 6.
+#------------------------------------------------------------------------------------#
+# This function is used to prepare the model output for figure 4.
 # Calculates a global annual average of the provided fields for all cases.
-#-----------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------#
 def global_annual_average(filebase, outloc, fields, cam_version):
 	cases_cam4 = {'07', '0725', '075', '0775','08', '0825', '085','0875','09', '0925','095', '0975', '10', '1025', '105','1075','11'}
 	cases_cam5 = {'09', '0925','095', '0975', '10', '1025', '105'}
@@ -499,9 +497,9 @@ def global_annual_average(filebase, outloc, fields, cam_version):
 
 
 #-----------------------------------------------------------------------------------------#
-# This function is used to calculate Lower Tropospheric Stability (LTS) to be plotted  
-# in figure 6. LTS is the difference in potential temperature between the suface and 
-# 700 hPa, so we first select the temperature and pressure at 700 hPa, then calculate potential
+# This function is used to calculate Lower Tropospheric Stability (LTS) for figure 4. 
+# LTS is the difference in potential temperature between the suface and 700 hPa, 
+# so we first select the temperature and pressure at 700 hPa, then calculate potential
 # temperature at that level and at the surface, and finally subtract them.
 #-----------------------------------------------------------------------------------------#
 def prep_lts(filebase, outloc, cam_version):
@@ -565,10 +563,9 @@ def prep_lts(filebase, outloc, cam_version):
 
 
 #-----------------------------------------------------------------------------------------#
-# This function is used to calculate Estimated Inversion Strength (EIS) to be plotted in 
-# figure 6. EIS is calculated using equation 4 from Wood & Bretherton 2006, which 
-# requires calculating the variables necessary to calculate the moist potential temperature 
-# gradient.
+# This function is used to calculate Estimated Inversion Strength (EIS) for figure 4. 
+# EIS is calculated using equation 4 from Wood & Bretherton 2006, which requires calculating
+# the variables necessary to calculate the moist potential temperature gradient.
 #-----------------------------------------------------------------------------------------#
 def prep_eis(filebase, outloc, cam_version):
 	# EIS uses LTS so run the LTS prep if not done already
@@ -643,7 +640,7 @@ def prep_eis(filebase, outloc, cam_version):
 
 
 #-----------------------------------------------------------------------------------------#
-# This function is used to prepare the model output to be plotted on the maps in figure 4
+# This function is used to prepare the model output to be plotted on the maps in figure 5
 # It is essentially performing the same function as map_annual_average except that total 
 # water path is calculated for low and high clouds. This function outputs two netCDF files,
 # one for the high waterpath, one for the low waterpath.
@@ -692,7 +689,7 @@ def total_waterpath(filebase, outloc, cam_version):
 #-----------------------------------------------------------------------------------------#
 # This function is used to generate the radiative fluxes from CAM5 (fluxes_*.txt files
 # which are provided in data archive /FYSP_clouds_archive/radiative_transfer/CAM5/), 
-# for Extended Data Figure 3.
+# for Extended Data Figure 8.
 #-----------------------------------------------------------------------------------------#
 def generate_fluxes_cam5(filebase):
 	
@@ -1081,7 +1078,7 @@ def generate_fluxes_cam5(filebase):
 # -------------------------------------------------------------------------------
 # This function calculates the net surface, 200hPa, and top of atmosphere (TOA)
 # radiative forcing for CAM5. CAM4, and the SMART line by line model, for Extended
-# Data Figure 3.
+# Data Figure 8.
 # -------------------------------------------------------------------------------
 def calculate_rad_fluxes(filebase):
 	cam5_filebase = filebase + 'CAM5/'
@@ -1475,6 +1472,9 @@ def calculate_rad_fluxes(filebase):
 	return(fluxes_all)
 
 
+# -------------------------------------------------------------------------------
+# This function preps the model output for Extended Data figure 6.
+# -------------------------------------------------------------------------------
 def prep_anomaly_histograms(download_path, outloc):
 	filebase = download_path + 'FYSP_clouds_archive/CAM4/'
 	filebase_c5 = download_path + 'FYSP_clouds_archive/CAM5/'

@@ -217,5 +217,5 @@ for p in cloudfields:
 
 plt.show()
 
-fig.savefig("ED_figure3.pdf", format='pdf', bbox_inches='tight')
+fig.savefig("figures_ED/ED_figure3.pdf", format='pdf', bbox_inches='tight')
 
