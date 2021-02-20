@@ -1,406 +1,222 @@
 #!/usr/bin/env python3
+
 """
 Author: Victoria McDonald
 email: vmcd@atmos.washington.edu
 website: http://torimcd.github.com
 license: BSD
 
+This script plots the surface energy balance for both CAM4 and CAM5 model output.
+
 """
-import matplotlib as mpl
-mpl.use("Agg")
+import matplotlib
+matplotlib.use("Agg")
 
 import os
 import sys
-import numpy as np
+import numpy
 import netCDF4
 import operator
+import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib.gridspec as gridspec
-from matplotlib import ticker
-from mpl_toolkits.basemap import Basemap
 import processing_functions as pf
+
 
 # ------------------------------------------------------------------------
 # change this section to match where you downloaded the model output files 
 # ------------------------------------------------------------------------
 
-download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
+download_path = '' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
 
-filebase = download_path + 'FYSP_clouds_archive/CAM5/'
+filebase = download_path + 'FYSP_clouds_archive/CAM4/'
+filebase_c5 = download_path + 'FYSP_clouds_archive/CAM5/'
 outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
 
-# ------------------------------------
-
-# process the fields we're plotting
-pf.zonal_average(filebase, outfileloc, 'cam5', numfields='all') # averages fields zonally over years 31-60, retaining location so can be plotted in map view
-pf.wetbulb_potentialtemp(filebase, outfileloc, 'cam5') # the same as above but for wetbulb potential temperature selected at 700 hPa
-
+# ------------------------------------------
 
 
 # field variables
-fields= ['T',
-	'sigmaw',
-	'Q',
-	'OMEGA']
+fields = 'co2vmr,LHFLX,SHFLX,CLDLOW,CLDHGH,LWCF,SWCF,FSDS,FSDSC,FSNS,FSNSC,FLDS,FLDSC,FLNS,FLNSC'
 
-cmaps=['cool', 'cool','GnBu', 'RdGy']
-cmaps_d=['RdBu_r','RdBu_r','BrBG','RdGy']
+pf.global_annual_average(filebase, outfileloc, fields, 'cam4')
+pf.global_annual_average(filebase_c5, outfileloc, fields, 'cam5')
 
-filenames = ['c5_zonal_average_',
-	'c5_wbpt_',
-	'c5_zonal_average_',
-	'c5_zonal_average_']
+sw_dn = 'FSDS'
+sw_net = 'FSNS'
+lw_dn = 'FLDS'
+lw_net = 'FLNS'
 
-letters = ['a', 'b', 'c', 'd', 'e', 'f']
-
-vmins = [200, -20, 240, -6, 0, -20,-5, -1.8] 
-vmaxs = [602, 22, 320, 7, 20, 21, 6, 1.8]
-
-present = '10'
-eight = '09'
-
-casenames = {'09': '#97dde5','0925': '#2c7fb8','095': '#4c4cff','0975':'#9366af','10': 'black','1025': '#cb181d','105': '#fcae91',}
-
-#create plot. 
-fig = plt.figure(figsize=(7.08661, 4.4744))
-
-# container
-outer_grid = gridspec.GridSpec(2, 1, wspace=0, hspace=0.2, height_ratios=(1,3))
-
-midgrid_top = gridspec.GridSpecFromSubplotSpec(1,2, subplot_spec=outer_grid[0], wspace=0.2, hspace=0.1)
-midgrid_bottom = gridspec.GridSpecFromSubplotSpec(1,2, subplot_spec=outer_grid[1], wspace=0.2, hspace=0.3,width_ratios=(2,1))
-
-# first two columns, absolute value plots
-absgrid = gridspec.GridSpecFromSubplotSpec(4, 3, subplot_spec=midgrid_bottom[0], wspace=0.05, hspace=0.12, width_ratios=(25,25,1))
-
-# third colum, anomaly plots
-diffgrid = gridspec.GridSpecFromSubplotSpec(4, 2, subplot_spec=midgrid_bottom[1], wspace=0.05, hspace=0.12, width_ratios=(25,1))	
-
-n=0
-
-ax1 = fig.add_subplot(midgrid_top[0])
-ax2 = fig.add_subplot(midgrid_top[1])
+lhflx = 'LHFLX'
+shflx = 'SHFLX'
 
 
-# Top row - zonal surface temp and diff -----------------------------------------------
-for CASENAME in casenames.keys():
-	dsloc_a = outfileloc+filenames[0]+CASENAME+'.nc'
+outfilebase_c4 = 'c4_global_average_'
+outfilebase_c5 = 'c5_global_average_'
 
-	if os.path.isfile(dsloc_a):
+casenames = ['07','0725','075','0775','08','0825','085','0875','09','0925','095','0975','10','1025','105','1075','11']
+casenames_c5 = ['09','0925','095','0975','10','1025','105']
 
-		# open the merged file and get out the variables
-		ds = netCDF4.Dataset(dsloc_a)
-		ts_a = ds.variables['TS'][:]
-		lat = ds.variables['lat'][:]
-		ds.close() #close the file
-		ts_a = ts_a.flatten()
+sc_all = [1.1, 1.075, 1.05, 1.025, 1.0, 0.975, 0.95, 0.925, 0.9, 0.875, 0.85, 0.825, 0.8, 0.775, 0.75, 0.725, 0.7]
+sc_c5 = ['1.05','1.025','1.0', '0.975', '0.95','0.925','0.9']
 
-	dsloc_p = outfileloc+filenames[0]+present+'.nc'
-	if os.path.isfile(dsloc_p):
 
-		# open the merged file and get out the variables
-		ds = netCDF4.Dataset(dsloc_p)
-		ts_p = ds.variables['TS'][:]
-		lat = ds.variables['lat'][:]
-		ds.close() #close the file
-		ts_p = ts_p.flatten()
+
+#create plot
+fig = plt.figure(figsize=(7.08661, 7.28346))
+#fig = plt.figure(figsize=(10, 11))
+ax = plt.subplot(211)
+
+sw_dn_plot = []
+sw_up_plot = []
+sw_net_plot = []
+lw_dn_plot = []
+lw_up_plot = []
+lw_net_plot = []
+
+lhflx_plot = []
+shflx_plot = []
+
+sw_dn_plot_c5 = []
+sw_up_plot_c5 = []
+sw_net_plot_c5 = []
+lw_dn_plot_c5 = []
+lw_up_plot_c5 = []
+lw_net_plot_c5 = []
+
+
+lhflx_plot_c5 = []
+shflx_plot_c5 = []
+
+i=0
+#plot the data
+for CASE in casenames:
+	CASENAME = casenames[i]
+	dsloc = outfileloc + outfilebase_c4 + CASENAME + '.nc'
+	if os.path.isfile(dsloc):
+		swd = []
+		swdc = []
+		swn = []
+		swnc = []
+		lwd = []
+		lwdc = []
+		lwn = []
+		lwnc = []
+		lh = []
+		sh = []
+
+		# open the merged file and get out some variables
+		dsyear = netCDF4.Dataset(dsloc)
+		swd = dsyear.variables[sw_dn][:]
+		swn = dsyear.variables[sw_net][:]
+		lwd = dsyear.variables[lw_dn][:]
+		lwn = dsyear.variables[lw_net][:]
+		sh = dsyear.variables[shflx][:]
+		lh = dsyear.variables[lhflx][:]
+		dsyear.close() #close the file
+
+		swd = swd.flatten()
+		swn = swn.flatten()
+		lwd = lwd.flatten()
+		lwn = lwn.flatten()
+		sh = sh.flatten()
+		lh = lh.flatten()
+
 		
-	# calculate the difference
-	ts_d = ts_a - ts_p
+	sw_dn_plot.append(swd.item(0))
+	sw_net_plot.append(swn.item(0))
+	sw_up_plot.append((swn.item(0) - swd.item(0))*(-1))
+	lw_dn_plot.append(lwd.item(0))
+	lw_net_plot.append(lwn.item(0))
+	lw_up_plot.append((lwn.item(0) - lwd.item(0))*(-1))
+	lhflx_plot.append(lh.item(0))
+	shflx_plot.append(sh.item(0))
+	i+=1
 
-	#plot the data
-	ax1.plot(lat, ts_a, color=casenames[CASENAME], linewidth=1, rasterized=False)
-	ax2.plot(lat, ts_d, color=casenames[CASENAME], linewidth=1, rasterized=False)
+i=0
+for CASENAME in casenames_c5:
+	CASENAME = casenames_c5[i]
+	dsloc = outfileloc + outfilebase_c5 + CASENAME + '.nc'
+	if os.path.isfile(dsloc):
+		swd_c5 = []
+		swdc_c5 = []
+		swn_c5 = []
+		swnc_c5 = []
+		lwd_c5 = []
+		lwdc_c5 = []
+		lwn_c5 = []
+		lwnc_c5 = []
+		lh_c5 = []
+		sh_c5 = []
 
-	# fix axis tick spacing
-	ax1.xaxis.set_major_locator(ticker.MultipleLocator(30))
-	ax2.xaxis.set_major_locator(ticker.MultipleLocator(30))
+		# open the merged file and get out some variables
+		dsyear = netCDF4.Dataset(dsloc)
+		swd_c5 = dsyear.variables[sw_dn][:]
+		swn_c5 = dsyear.variables[sw_net][:]
+		lwd_c5 = dsyear.variables[lw_dn][:]
+		lwn_c5 = dsyear.variables[lw_net][:]
+		sh_c5 = dsyear.variables[shflx][:]
+		lh_c5 = dsyear.variables[lhflx][:]
+		dsyear.close() #close the file
 
-	ax1.yaxis.set_major_locator(ticker.MultipleLocator(20))
+		swd_c5 = swd_c5.flatten()
+		swn_c5 = swn_c5.flatten()
+		lwd_c5 = lwd_c5.flatten()
+		lwn_c5 = lwn_c5.flatten()
+		sh_c5 = sh_c5.flatten()
+		lh_c5 = lh_c5.flatten()
 
-	plt.setp(ax1.get_xticklabels(), fontsize=5)
-	plt.setp(ax2.get_xticklabels(), fontsize=5)
-
-	plt.setp(ax1.get_yticklabels(), fontsize=5)
-	plt.setp(ax2.get_yticklabels(), fontsize=5)
-
-
-# axis labels
-ax1.set_ylabel(r'$\mathsf{Temperature}$' +r'$\mathsf{(K)}$', fontsize=5)
-ax1.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
-ax2.set_ylabel(r'$\mathsf{Difference}$' + '\n' +r'$\mathsf{(K)}$', fontsize=5)
-ax2.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
-
-plt.text(-0.15, 1.0, letters[n], fontsize=6, fontweight="bold", transform=ax1.transAxes)
-n=n+1
-plt.text(-0.10, 1.0, letters[n], fontsize=6, fontweight="bold", transform=ax2.transAxes)
-n=n+1
-
-
-# Bottom section ---------------------------------------------------------------------
-
-labs = [r'$\mathsf{Pressure}$' + '\n' +r'$\mathsf{(hPa)}$', '', r'$\mathsf{Potential}$' + '\n' +r'$\mathsf{Temperature}$'+r'$\mathsf{(K)}$', '', '', r'$\mathsf{Difference}$' + '\n' +r'$\mathsf{(K)}$',  r'$\mathsf{Pressure}$' + '\n' +r'$\mathsf{(hPa)}$', '', r'$\mathsf{Wet}$'+r'$\mathsf{Bulb}$'+ '\n'+r'$\mathsf{Potential}$' +'\n'+r'$\mathsf{Temperature}$'+r'$\mathsf{(K)}$', '', '', r'$\mathsf{Difference}$' + '\n' +r'$\mathsf{(K)}$', r'$\mathsf{Pressure}$' + '\n' +r'$\mathsf{(hPa)}$', '', r'$\mathsf{Humidity}$' + '\n' +r'$\mathsf{(g/kg)}$', '', '', r'$\mathsf{Difference}$' + '\n' +r'$\mathsf{(x10 g/kg)}$', r'$\mathsf{Pressure}$' + '\n' +r'$\mathsf{(hPa)}$', r'$\mathsf{Vertical Velocity}$'+'\n' + r'$\mathsf{(Pressure)}$' + '\n' +r'$\mathsf{(hPa/s)}$', '', r'$\mathsf{Difference}$' + '\n' +r'$\mathsf{(hPa/s)}$', '']
-
-# keep track of which field/row we're on
-row=0
-# keep track of which gridspace/column we're plotting in for abs val
-a = 0
-# keep track of which gridspace/column we're plotting in for diff		
-d = 0
-# keep track of which vmin/max we're on
-v = 0
-# keep track of labels
-l = 0
-
-present = '10'
-eight = '09'
-
-for p in fields:
-	f = filenames[row]
-	field = fields[row]
-
-	# get out the data for the 1.0 S/So and 0.9 S/So
-	presentcase = outfileloc + f + present +'.nc'
-	eightcase = outfileloc + f + eight +'.nc'
-
-	
-	#plot the data - PRESENT
-	ax = fig.add_subplot(absgrid[a])
-	a=a+1
-
-
-	if os.path.isfile(presentcase):
-
-		ds = netCDF4.Dataset(presentcase)
-		op = ds.variables[field][:]
-
-		if n == 3:
-			lat = ds.variables['latitude'][:]
-		else:
-			lat = ds.variables['lat'][:]
-		p = ds.variables['lev'][:]
-		ds.close() #close the file
-
-		if n == 2:
-			f = (1000/p)**0.286
-			t = np.squeeze(op)
-
-			op = t*f[:,None]
-
-		if n ==3:
-			print('none')
-
-		if n == 4:
-			op = op*1000
-
-		if n == 5:
-			op = op*100
-
-		#color based on temp
-		numcolor = op.size
-		cm = plt.get_cmap(cmaps[row], 40)
-
-		# create the colorbar
-		if a > 9:
-			tlevs=[-3.6, -3.2, -2.8, -2.4, -2.0,  -1.6,  -1.2, -0.8, -0.4, 0, 0.4, 0.8, 1.2,  1.6,  2.0,  2.4,  2.8,  3.2, 3.6]
-		else:
-			tlevs = range(vmins[v], vmaxs[v])
-
-		cnorm = colors.Normalize(vmins[v], vmaxs[v])
-		scalarMap = mpl.cm.ScalarMappable(norm=cnorm, cmap=cm)
 		
-		# Create 2D lat/lon arrays for Basemap
-		pressure2d, lat2d = np.meshgrid(p, lat)
+	sw_dn_plot_c5.append(swd_c5.item(0))
+	sw_net_plot_c5.append(swn_c5.item(0))
+	sw_up_plot_c5.append((swn_c5.item(0) - swd_c5.item(0))*(-1))
+	lw_dn_plot_c5.append(lwd_c5.item(0))
+	lw_net_plot_c5.append(lwn_c5.item(0))
+	lw_up_plot_c5.append((lwn_c5.item(0) - lwd_c5.item(0))*(-1))
 
-		#ax.set_prop_cycle(color=[scalarMap.to_rgba(i) for i in ts])
-		ax.set_color_cycle([cm(1.*i/numcolor) for i in range(numcolor)])
-
-
-		#plot the data
-		c=plt.contourf(lat, p, np.squeeze(op), tlevs, cmap=cm, rasterized=True)
-		ax.xaxis.set_major_locator(ticker.MultipleLocator(30))
-
-		# axis labels
-		ax.set_ylabel(labs[l], fontsize=5)
-		l = l+1
-
-		ax.invert_yaxis()
-
-		if n < 5:
-			ax.set_xticklabels([])
-			ax.set_xlabel(labs[l], fontsize=5)
-			l = l+1
-
-		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
+	lhflx_plot_c5.append(lh_c5.item(0))
+	shflx_plot_c5.append(sh_c5.item(0))
+	i+=1
 
 
-		# This is the fix for the white lines between contour levels
-		for i in c.collections:
-  		  i.set_edgecolor("face")
-		
-		# add letter annotation
-		plt.text(-0.22, 1.0, letters[n], fontsize=6, fontweight="bold", transform=ax.transAxes)
 
-		plt.setp(ax.get_xticklabels(), fontsize=5)
-		plt.setp(ax.get_yticklabels(), fontsize=5)
-
-	#plot the data -> S/S0 = 0.9
-	ax = fig.add_subplot(absgrid[a])
-	a=a+1
-
-	if os.path.isfile(eightcase):
-		ds = netCDF4.Dataset(eightcase)
-		o8 = ds.variables[field][:]
-		if n == 3: 
-			lat = ds.variables['latitude'][:]
-		else:
-			lat = ds.variables['lat'][:]
-		p = ds.variables['lev'][:]
-		ds.close() #close the file
-
-		if n == 2:
-			f = (1000/p)**0.286
-			t = np.squeeze(o8)
-
-			o8 = t*f[:,None]
-
-		if n == 4:
-			o8 = o8*1000
-
-		if n == 5:
-			o8 = o8*100
-
-		#color based on temp
-		numcolor = o8.size
-		cm = plt.get_cmap(cmaps[row], 40)
-
-		# create the colorbar
-		if a > 9:
-			tlevs=[-3.6, -3.2, -2.8, -2.4, -2.0,  -1.6,  -1.2, -0.8, -0.4, 0, 0.4, 0.8, 1.2,  1.6,  2.0,  2.4,  2.8,  3.2, 3.6]
-		else:
-			tlevs = range(vmins[v], vmaxs[v])
-
-		cnorm = colors.Normalize(vmins[v], vmaxs[v])
-		scalarMap = mpl.cm.ScalarMappable(norm=cnorm, cmap=cm)
-		
-		# Create 2D lat/lon arrays for Basemap
-		pressure2d, lat2d = np.meshgrid(p, lat)
-
-		#ax.set_prop_cycle(color=[scalarMap.to_rgba(i) for i in ts])
-		ax.set_color_cycle([cm(1.*i/numcolor) for i in range(numcolor)])
+plt.plot(sc_all, sw_dn_plot, color='gold', marker='v', linestyle='-', label='Shortwave Down CAM4')
+plt.plot(sc_all, sw_up_plot, color='olive', marker='^', linestyle='-', label='Shortwave Up CAM4')
+plt.plot(sc_all, sw_net_plot, color='orange', marker='o', label='Shortwave Net CAM4')
+plt.plot(sc_all, lw_dn_plot, color='dodgerblue', marker='v', linestyle='-', label='Longwave Down CAM4')
+plt.plot(sc_all, lw_up_plot, color='skyblue', marker='^', linestyle='-', label='Longwave Up CAM4')
+plt.plot(sc_all, lw_net_plot, color='blue', marker='o', label='Longwave Net CAM4')
+plt.plot(sc_all, lhflx_plot, color='green', marker='s', linestyle='-', label='Latent Heat CAM4')
+plt.plot(sc_all, shflx_plot, color='red', marker='s', linestyle='-', alpha=0.7, label='Sensible Heat CAM4')
 
 
-		#plot the data
-		c=plt.contourf(lat, p, np.squeeze(o8), tlevs, cmap=cm, rasterized=True)
 
-		# axis labels
-		ax.xaxis.set_major_locator(ticker.MultipleLocator(30))
-		ax.invert_yaxis()
-		ax.set_yticklabels([])
-	
-		plt.setp(ax.get_xticklabels(), fontsize=5)
-		plt.setp(ax.get_yticklabels(), fontsize=5)
-
-		if n < 5:
-			ax.set_xticklabels([])
-
-		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
+plt.plot(sc_c5, sw_dn_plot_c5, color='black', marker='x', linestyle='--', label='CAM5')
+plt.plot(sc_c5, sw_up_plot_c5, color='black', marker='x', linestyle='--')
+plt.plot(sc_c5, sw_net_plot_c5, color='black', marker='x', linestyle='--')
+plt.plot(sc_c5, lw_dn_plot_c5, color='black', marker='x', linestyle='--')
+plt.plot(sc_c5, lw_up_plot_c5, color='black', marker='x', linestyle='--')
+plt.plot(sc_c5, lw_net_plot_c5, color='black', marker='x', linestyle='--')
+plt.plot(sc_c5, lhflx_plot_c5, color='black', marker='x', linestyle='--')
+plt.plot(sc_c5, shflx_plot_c5, color='black', marker='x', linestyle='--')
 
 
-		# This is the fix for the white lines between contour levels
-		for i in c.collections:
-  		  i.set_edgecolor("face")
 
-		# plot the colorbar - ABS value
-		ax = fig.add_subplot(absgrid[a])
-		a=a+1
+#sort legend
+handles, labels = ax.get_legend_handles_labels()
+hl = sorted(zip(handles, labels), key=operator.itemgetter(1))
+handles2, labels2 = zip(*hl)
 
-		cb = plt.colorbar(c, cax=ax)
-		cb.set_label(label=labs[l], fontsize=5)
-		l = l+1
+# Display the legend below the plot
+plt.legend(handles2, labels2, bbox_to_anchor=(0., -0.3, 1., .102), loc=3,ncol=3, mode="expand", borderaxespad=0., prop={"size":7})
 
-		tick_locator = ticker.MaxNLocator(nbins=3)
-		cb.locator = tick_locator
-		cb.ax.tick_params(labelsize=5)
-		cb.update_ticks()
-		v=v+1
-
-
-	#plot the data - DIFF
-	ax = fig.add_subplot(diffgrid[d])
-	d=d+1
-	if os.path.isfile(eightcase):
-	
-		#color based on temp
-		numcolor = o8.size
-		cm = plt.get_cmap(cmaps_d[row], 40)
-
-		# create the colorbar
-		if d == 7:
-			tlevs=[-1.4, -1.2, -1.0, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4]
-		else:
-			tlevs = range(vmins[v], vmaxs[v])
-
-		cnorm = colors.Normalize(vmins[v], vmaxs[v])
-		scalarMap = mpl.cm.ScalarMappable(norm=cnorm, cmap=cm)
-		
-		# Create 2D lat/lon arrays for Basemap
-		pressure2d, lat2d = np.meshgrid(p, lat)
-
-		#ax.set_prop_cycle(color=[scalarMap.to_rgba(i) for i in ts])
-		ax.set_color_cycle([cm(1.*i/numcolor) for i in range(numcolor)])
-
-		if n == 4:
-			diff =  (np.squeeze(o8) - np.squeeze(op))*10
-		else:
-			 diff = np.squeeze(o8) - np.squeeze(op)
-
-		#plot the data
-		c=plt.contourf(lat, p, diff, tlevs, cmap=cm, rasterized=True)
-
-		# axis labels
-		ax.xaxis.set_major_locator(ticker.MultipleLocator(30))
-		ax.invert_yaxis()
-		ax.set_yticklabels([])
-
-		plt.setp(ax.get_xticklabels(), fontsize=5)
-		plt.setp(ax.get_yticklabels(), fontsize=5)
-
-		ax.set_ylabel(labs[l], fontsize=5)
-		l = l+1
-
-		if n < 5:
-			ax.set_xticklabels([])
-			ax.set_xlabel(labs[l], fontsize=5)
-			l = l+1
-
-		if n == 5: ax.set_xlabel(r'$\mathsf{Latitude}$', fontsize=6)
-
-		# This is the fix for the white lines between contour levels
-		for i in c.collections:
-  		  i.set_edgecolor("face")
-
-
-		# plot the colorbar - DIFF value
-		ax = fig.add_subplot(diffgrid[d])
-		d=d+1
-		cb = plt.colorbar(c, cax=ax)
-		cb.set_label(label=labs[l], size=5)
-		l = l+1
-
-		tick_locator = ticker.MaxNLocator(nbins=3)
-		cb.locator = tick_locator
-		cb.ax.tick_params(labelsize=5)
-		cb.update_ticks()
-		v=v+1
-
-	# go to next field/row
-	n=n+1
-	row = row+1
-
-
+plt.title('Global Average Surface Energy Budget', fontsize=7)
+plt.xlabel(r'$\mathsf{S/S_0}$', fontsize=7)
+plt.ylabel(r'$\mathsf{Flux}$' + ' ' +r'$\mathsf{(W/m^2)}$', fontsize=7)
+plt.minorticks_on()
+ax.tick_params(labelsize=7) 
+plt.axis([0.675,1.125,0,400])
+plt.grid()
 plt.show()
 
-fig.savefig("ED_figure5.eps", format='eps', bbox_inches='tight')
+fig.savefig("ED_figure5.pdf", format='pdf', bbox_inches='tight')
 
