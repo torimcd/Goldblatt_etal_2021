@@ -25,7 +25,7 @@ import processing_functions as pf
 # change this section to match where you downloaded the model output files 
 # ------------------------------------------------------------------------
 
-download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
+download_path = '' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
 
 filebase = download_path + 'FYSP_clouds_archive/CAM4/'
 filebase_c5 = download_path + 'FYSP_clouds_archive/CAM5/'
@@ -475,5 +475,5 @@ for l in letters:
 
 plt.show()
 
-fig.savefig("figure6.eps", format='eps',bbox_inches='tight')
+fig.savefig("figures_main/figure6.pdf", format='pdf',bbox_inches='tight')
 

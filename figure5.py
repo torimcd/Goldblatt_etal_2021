@@ -24,7 +24,7 @@ import processing_functions as pf
 # change this section to match where you downloaded the model output files 
 # ------------------------------------------------------------------------
 
-download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
+download_path = '' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
 
 filebase = download_path + 'FYSP_clouds_archive/CAM4/'
 outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
@@ -131,5 +131,5 @@ cb.update_ticks()
 
 plt.show()
 
-fig.savefig("figure5.eps", format='eps',bbox_inches='tight')
+fig.savefig("figures_main/figure5.pdf", format='pdf',bbox_inches='tight')
 
