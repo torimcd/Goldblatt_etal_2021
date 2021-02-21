@@ -5,7 +5,8 @@ email: vmcd@atmos.washington.edu
 website: http://torimcd.github.com
 license: BSD
 
-This script creates a set of 2D histograms of cloud behavior against forcings. 
+This script prepares the model output to make a set of 2D histograms of cloud behavior against forcings. 
+The actual figure is plotted in MATLAB, see /matlab_files/ED_figure6/
 
 """
 import matplotlib
@@ -26,14 +27,14 @@ import processing_functions as pf
 # change this section to match where you downloaded the model output files 
 # ------------------------------------------------------------------------
 
-download_path = '/home/vmcd/' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
+download_path = '' # enter the path to the directory where you downloaded the archived data, eg '/home/user/Downloads'
 
 filebase = download_path + 'FYSP_clouds_archive/CAM4/'
 filebase_c5 = download_path + 'FYSP_clouds_archive/CAM5/'
 
 outfileloc = download_path + 'temp_data/' # this is the location to save the processed netcdf files to
 
-pf.prep_anomaly_histograms(download_path, outfileloc)
+pf.prep_anomaly_histograms(filebase, filebase_c5, outfileloc)
 
 casenames_c4 = {'_10', '_09', '_08'}
 casenames_c5 = {'_10', '_09'}

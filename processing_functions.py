@@ -1475,12 +1475,11 @@ def calculate_rad_fluxes(filebase):
 # -------------------------------------------------------------------------------
 # This function preps the model output for Extended Data figure 6.
 # -------------------------------------------------------------------------------
-def prep_anomaly_histograms(download_path, outloc):
-	filebase = download_path + 'FYSP_clouds_archive/CAM4/'
-	filebase_c5 = download_path + 'FYSP_clouds_archive/CAM5/'
-
+def prep_anomaly_histograms(filebase, filebase_c5, outloc):
 	cases_cam4 = {'08','09','10'} # we need the S/S0=0.9 case for these plots
 	cases_cam5 = {'09','10'}
+
+	# --- subset the model output for any maps that we don't have yet
 
 	# prep the eis, lts, waterpath maps if haven't yet got it
 	map_prep_eis(filebase, outloc, 'cam4')
@@ -1489,12 +1488,67 @@ def prep_anomaly_histograms(download_path, outloc):
 	map_prep_lts(filebase_c5, outloc, 'cam5')
 	map_total_waterpath(filebase, outloc, 'cam4')
 
+	c4_eis_1_file = ''
+	c4_eis_8_file = ''
+	c4_eis_9_file = ''
+	c5_eis_1_file = ''
+	c5_eis_9_file = ''
+
+	c4_wp_1_file = ''
+	c4_wp_8_file = ''
+	c4_wp_9_file = ''
+
+	c4_swcf_1_file = ''
+	c4_swcf_8_file = ''
+	c4_swcf_9_file = ''
+	c5_swcf_1_file = ''
+	c5_swcf_9_file = ''
+
+	c4_lhflx_1_file = ''
+	c4_lhflx_8_file = ''
+	c4_lhflx_9_file = ''
+	c5_lhflx_1_file = ''
+	c5_lhflx_9_file = ''
+
+	c4_cldlow_1_file = ''
+	c4_cldlow_8_file = ''
+	c4_cldlow_9_file = ''
+	c5_cldlow_1_file = ''
+	c5_cldlow_9_file = ''
+
+	c4_ah_1_file = ''
+	c4_ah700_1_file = ''
+	c4_ah1000_1_file = ''
+
+	c4_ah_8_file = ''
+	c4_ah700_8_file = ''
+	c4_ah1000_8_file = ''
+	
+	c4_ah_9_file = ''
+	c4_ah700_9_file = ''
+	c4_ah1000_9_file = ''
+	c5_ah_1_file = ''
+	c5_ah700_1_file = ''
+	c5_ah1000_1_file = ''
+	
+	c5_ah_9_file = ''
+	c5_ah700_9_file = ''
+	c5_ah1000_9_file = ''
+
+	c4_ts_1_file = ''
+	c4_ts_8_file = ''
+	c4_ts_9_file = ''
+	c5_ts_1_file = ''
+	c5_ts_9_file = ''
 	
 	# ------ CAM4
 	cam_version = 'cam4'
 	for case in cases_cam4:
 		selyear = '-selyear,21/40'	
 		sellevel = '-sellevel,696.79629'
+
+		eis = outloc + 'c4_eis_' + case + '.nc'
+		eis = outloc + 'c4_waterpath_' + case + '.nc'
 
 		# for absolute humidity
 		ah700 = outloc + 'c4_700ah_' + case + '.nc'
@@ -1507,6 +1561,15 @@ def prep_anomaly_histograms(download_path, outloc):
 
 		# for ts
 		ts = outloc + 'c4_ts_' + case + '.nc'
+
+		if case == '08':
+			c4_eis_8_file = eis
+			c4_wp_8_file = wp
+			c4_swcf_8_file = swcf
+			c4_cldlow_8_file
+			c4_ah700_8_file = ah700
+			c4_ah1000_8_file = ah700
+			c4_ts_8_file = ts
 
 
 		# absolute humidity
@@ -1526,7 +1589,6 @@ def prep_anomaly_histograms(download_path, outloc):
 			syscall = r"//usr//bin//cdo timmean " + selyear + ' -select,name=QREFHT ' + infile + ' ' + ah1000
 			print(syscall)
 			os.system(syscall)
-
 
 		# Other variables
 		if not os.path.isfile(swcf):
@@ -1646,5 +1708,7 @@ def prep_anomaly_histograms(download_path, outloc):
 			print(syscall)
 			os.system(syscall)
 
+
+	# --- calculate the anomalies and put the data in new .nc files
 
 	
