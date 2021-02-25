@@ -23,7 +23,9 @@ replace instances of r"//usr//bin//cdo " with "cdo" if that is the only installe
 
 Also, the processed model output will be saved to new netCDF files that are then used to make the figures. The variable outfileloc in each figure script points to the location where these processed files will be saved, and the directory must already exist on your system, so please create a new directory (we recommend outside of this repository), or change to point to an existing directory.
 
-Figure 3, Extended Data Figures 2, 6 rely on MATLAB scripts for some of the processing and plotting, although in all cases some processing is done using python first. We recommend running the .py script associated with each figure, then run the associated MATLAB scripts to complete the processing or figure plotting. For Fig 3 and ED Fig2, you will then need to rerun the .py files to finish plotting the figures.
+Figure 3, and Extended Data Figures 2, and 6 rely on MATLAB scripts for some of the processing and plotting, although in all cases some processing is done using python first. We recommend running the .py script associated with each figure, then run the associated MATLAB scripts to complete the processing or figure plotting. For Fig 3 and ED Fig2, you will then need to rerun the .py files to finish plotting the figures.
+
+NOTE: there are currently some problems with the scripts for Extended DataFigure 6. These will be updated soon, but please get in touch if you need them.
 
 General correspondence about the paper and methods should be directed to corresponding authors Colin Goldblatt (czg@uvic.ca) and Victoria McDonald (vmcd@atmos.washington.edu).  
 Questions about the code in this repository can be sent to Victoria McDonald (vmcd@atmos.washington.edu), or open an issue in the GitHub repository.
