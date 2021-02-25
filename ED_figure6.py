@@ -5,6 +5,9 @@ email: vmcd@atmos.washington.edu
 website: http://torimcd.github.com
 license: BSD
 
+*** THIS SCRIPT IS CURRENTLY BROKEN AND WILL NOT REPRODUCE ED FIGURE 6.
+	IT WILL BE UPDATED SOON ***
+
 This script prepares the model output to make a set of 2D histograms of cloud behavior against forcings. 
 The actual figure is plotted in MATLAB, see /matlab_files/ED_figure6/
 
