@@ -25,7 +25,7 @@ Also, the processed model output will be saved to new netCDF files that are then
 
 Figure 3, and Extended Data Figures 2, and 6 rely on MATLAB scripts for some of the processing and plotting, although in all cases some processing is done using python first. We recommend running the .py script associated with each figure, then run the associated MATLAB scripts to complete the processing or figure plotting. For Fig 3 and ED Fig2, you will then need to rerun the .py files to finish plotting the figures.
 
-NOTE: there are currently some problems with the scripts for Extended DataFigure 6. These will be updated soon, but please get in touch if you need them.
+NOTE: there are currently some problems with the code for the histograms in Extended Data Figure 6. These will be updated soon, but please get in touch if you need them in the meantime.
 
 General correspondence about the paper and methods should be directed to corresponding authors Colin Goldblatt (czg@uvic.ca) and Victoria McDonald (vmcd@atmos.washington.edu).  
 Questions about the code in this repository can be sent to Victoria McDonald (vmcd@atmos.washington.edu), or open an issue in the GitHub repository.
